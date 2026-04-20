@@ -1,0 +1,180 @@
+{
+  "nextUserId": 2,
+  "users": [
+    {
+      "id": 1,
+      "email": "sys.admin@credistart.com",
+      "password_hash": "83731014884e5b0dc8ce6c46ad8ec9a624db0f705726f9e41f0de4addbeeb494c2008bc7a06bd2aab1bec49032933b01ecf1848b8612cf2154d84b9c60d1e3c0",
+      "salt": "5b2729506f938c9d00fe5919879dae2b",
+      "name": "SYSADMIN",
+      "created_at": "2026-04-14T08:22:26.819Z",
+      "role": "admin",
+      "email_verified": true,
+      "verified_at": "2026-04-14T08:22:26.819Z",
+      "must_reset_password": false,
+      "force_reset_reason": "",
+      "created_meta": {
+        "source": "seeded_sysadmin",
+        "device_type": "system",
+        "platform": "system",
+        "timezone": "UTC",
+        "locale": "en-US",
+        "ip": "127.0.0.1",
+        "user_agent": "CrediStart bootstrap",
+        "received_at": "2026-04-14T08:22:26.957Z"
+      },
+      "teacher_id": null,
+      "teacher_code": "",
+      "class_name": "",
+      "classroom_groups": [],
+      "class_group_id": null,
+      "class_assistant_for": null,
+      "class_joined_at": null,
+      "class_left_at": null,
+      "class_history": [],
+      "last_login_at": "2026-04-15T19:22:42.035Z",
+      "analytics": {
+        "total_active_ms": 0,
+        "page_time_ms": {},
+        "page_views": {},
+        "link_clicks": {},
+        "last_seen_at": null,
+        "last_page": null,
+        "logins": 5,
+        "sessions": 5,
+        "most_recent_events": []
+      }
+    }
+  ],
+  "progress": [
+    {
+      "user_id": 1,
+      "completed_modules": [],
+      "quiz_scores": {},
+      "quiz_answers": {},
+      "quiz_selections": {},
+      "quiz_metrics": {},
+      "credit_scores": [],
+      "updated_at": "2026-04-14T08:22:26.957Z"
+    }
+  ],
+  "sessions": {
+    "94651ad7faf762b73e906811a064c2a39a6b544a82b431301e3427442357e163": {
+      "userId": 1,
+      "created": 1776280693717,
+      "expiresAt": 1776885493717
+    },
+    "cc1dec51b80e483bf3ff5e088d77eb43102449627b51036c5cca3778fae52519": {
+      "userId": 1,
+      "created": 1776280838583,
+      "expiresAt": 1776885638583
+    },
+    "7341f58e1a58da380961feab39db82c6967cb235580b7ec8c8d3cf5f2018e61a": {
+      "userId": 1,
+      "created": 1776280881176,
+      "expiresAt": 1776885681176
+    },
+    "669a0ae65e4746cef2ce4e06a08e8de0e9541f887b0e59ea99b2e18b097a6b50": {
+      "userId": 1,
+      "created": 1776280899660,
+      "expiresAt": 1776885699660
+    },
+    "06c80cf71239a7fcdbdb85626f635900ff946a76bc8f7e4a40905fe46a944c96": {
+      "userId": 1,
+      "created": 1776280962037,
+      "expiresAt": 1776885762037
+    }
+  },
+  "pendingVerifications": {},
+  "passwordResets": {},
+  "loginSecurity": {},
+  "rateLimits": {},
+  "auditLog": [
+    {
+      "at": "2026-04-14T08:22:26.959Z",
+      "action": "seed_sysadmin_account",
+      "actor_user_id": null,
+      "actor_email": "system",
+      "actor_role": "system",
+      "target_user_id": 1,
+      "details": {
+        "email": "sys.admin@credistart.com"
+      }
+    },
+    {
+      "at": "2026-04-15T19:18:13.715Z",
+      "action": "login",
+      "actor_user_id": 1,
+      "actor_email": "sys.admin@credistart.com",
+      "actor_role": "admin",
+      "target_user_id": 1,
+      "ip": "127.0.0.1",
+      "device_type": "desktop",
+      "user_agent": "curl/8.10.1",
+      "referrer": "",
+      "before": null,
+      "after": null,
+      "details": {}
+    },
+    {
+      "at": "2026-04-15T19:20:38.581Z",
+      "action": "login",
+      "actor_user_id": 1,
+      "actor_email": "sys.admin@credistart.com",
+      "actor_role": "admin",
+      "target_user_id": 1,
+      "ip": "127.0.0.1",
+      "device_type": "desktop",
+      "user_agent": "curl/8.10.1",
+      "referrer": "",
+      "before": null,
+      "after": null,
+      "details": {}
+    },
+    {
+      "at": "2026-04-15T19:21:21.175Z",
+      "action": "login",
+      "actor_user_id": 1,
+      "actor_email": "sys.admin@credistart.com",
+      "actor_role": "admin",
+      "target_user_id": 1,
+      "ip": "127.0.0.1",
+      "device_type": "desktop",
+      "user_agent": "curl/8.10.1",
+      "referrer": "",
+      "before": null,
+      "after": null,
+      "details": {}
+    },
+    {
+      "at": "2026-04-15T19:21:39.659Z",
+      "action": "login",
+      "actor_user_id": 1,
+      "actor_email": "sys.admin@credistart.com",
+      "actor_role": "admin",
+      "target_user_id": 1,
+      "ip": "127.0.0.1",
+      "device_type": "desktop",
+      "user_agent": "curl/8.10.1",
+      "referrer": "",
+      "before": null,
+      "after": null,
+      "details": {}
+    },
+    {
+      "at": "2026-04-15T19:22:42.035Z",
+      "action": "login",
+      "actor_user_id": 1,
+      "actor_email": "sys.admin@credistart.com",
+      "actor_role": "admin",
+      "target_user_id": 1,
+      "ip": "127.0.0.1",
+      "device_type": "desktop",
+      "user_agent": "curl/8.10.1",
+      "referrer": "",
+      "before": null,
+      "after": null,
+      "details": {}
+    }
+  ]
+}

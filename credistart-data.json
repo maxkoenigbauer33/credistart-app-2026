@@ -1,0 +1,78 @@
+{
+  "nextUserId": 2,
+  "users": [
+    {
+      "id": 1,
+      "email": "sys.admin@credistart.com",
+      "password_hash": "83731014884e5b0dc8ce6c46ad8ec9a624db0f705726f9e41f0de4addbeeb494c2008bc7a06bd2aab1bec49032933b01ecf1848b8612cf2154d84b9c60d1e3c0",
+      "salt": "5b2729506f938c9d00fe5919879dae2b",
+      "name": "SYSADMIN",
+      "created_at": "2026-04-14T08:22:26.819Z",
+      "role": "admin",
+      "email_verified": true,
+      "verified_at": "2026-04-14T08:22:26.819Z",
+      "must_reset_password": false,
+      "force_reset_reason": "",
+      "created_meta": {
+        "source": "seeded_sysadmin",
+        "device_type": "system",
+        "platform": "system",
+        "timezone": "UTC",
+        "locale": "en-US",
+        "ip": "127.0.0.1",
+        "user_agent": "CrediStart bootstrap",
+        "received_at": "2026-04-14T08:22:26.957Z"
+      },
+      "teacher_id": null,
+      "teacher_code": "",
+      "class_name": "",
+      "classroom_groups": [],
+      "class_group_id": null,
+      "class_assistant_for": null,
+      "class_joined_at": null,
+      "class_left_at": null,
+      "class_history": [],
+      "last_login_at": null,
+      "analytics": {
+        "total_active_ms": 0,
+        "page_time_ms": {},
+        "page_views": {},
+        "link_clicks": {},
+        "last_seen_at": null,
+        "last_page": null,
+        "logins": 0,
+        "sessions": 0,
+        "most_recent_events": []
+      }
+    }
+  ],
+  "progress": [
+    {
+      "user_id": 1,
+      "completed_modules": [],
+      "quiz_scores": {},
+      "quiz_answers": {},
+      "quiz_selections": {},
+      "quiz_metrics": {},
+      "credit_scores": [],
+      "updated_at": "2026-04-14T08:22:26.957Z"
+    }
+  ],
+  "sessions": {},
+  "pendingVerifications": {},
+  "passwordResets": {},
+  "loginSecurity": {},
+  "auditLog": [
+    {
+      "at": "2026-04-14T08:22:26.959Z",
+      "action": "seed_sysadmin_account",
+      "actor_user_id": null,
+      "actor_email": "system",
+      "actor_role": "system",
+      "target_user_id": 1,
+      "details": {
+        "email": "sys.admin@credistart.com"
+      }
+    }
+  ]
+}

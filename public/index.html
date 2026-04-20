@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CrediStart — Student Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy:      #0A2240;
+    --teal:      #00B4D8;
+    --lteal:     #90E0EF;
+    --gold:      #F4A828;
+    --pink:      #FF6B9D;
+    --purple:    #8B5CF6;
+    --green:     #22C55E;
+    --bg:        #F0F4FF;
+    --card:      #FFFFFF;
+    --gray:      #5A6472;
+    --lgray:     #E8EEF4;
+    --sidebar-w: 260px;
+    --gradient1: linear-gradient(135deg, #00B4D8, #8B5CF6);
+    --gradient2: linear-gradient(135deg, #FF6B9D, #F4A828);
+    --gradient3: linear-gradient(135deg, #22C55E, #00B4D8);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--navy); display: flex; min-height: 100vh; overflow-y:auto; }
+
+  /* ── ANIMATIONS ─────────────────────────────────────── */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:none; } }
+  @keyframes pop { 0%{transform:scale(0.8);opacity:0} 50%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  @keyframes confetti { 0%{transform:translateY(0) rotate(0)} 100%{transform:translateY(300px) rotate(720deg); opacity:0} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 5px rgba(0,180,216,.3)} 50%{box-shadow:0 0 20px rgba(0,180,216,.5)} }
+  .animate-in { animation: fadeIn .4s ease-out; }
+  .pop-in { animation: pop .4s ease-out; }
+
+  /* ── WELCOME SCREEN ─────────────────────────────────── */
+  #welcome-screen {
+    position:fixed; inset:0; z-index:999;
+    background: linear-gradient(135deg, #0A2240 0%, #1a365d 40%, #0A2240 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition: opacity .5s ease-out;
+    overflow-y: auto; overflow-x:hidden;
+  }
+  #welcome-screen.hidden { opacity:0; pointer-events:none; }
+  #welcome-screen::before {
+    content:''; position:absolute; width:600px; height:600px; border-radius:50%;
+    background: radial-gradient(circle, rgba(0,180,216,.15), transparent 70%);
+    top:-100px; right:-100px;
+  }
+  #welcome-screen::after {
+    content:''; position:absolute; width:400px; height:400px; border-radius:50%;
+    background: radial-gradient(circle, rgba(139,92,246,.12), transparent 70%);
+    bottom:-50px; left:-50px;
+  }
+  .welcome-emoji { font-size:4rem; margin-bottom:16px; animation:float 3s ease-in-out infinite; }
+  .welcome-logo { font-size:3.2rem; font-weight:900; color:#fff; letter-spacing:-2px; }
+  .welcome-logo span { background:var(--gradient2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .welcome-tag { color:var(--lteal); font-size:1.1rem; margin-top:8px; margin-bottom:40px; font-weight:500; }
+  .welcome-card {
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+    border-radius:20px; padding:40px; width:100%; max-width:440px;
+    backdrop-filter:blur(12px); position:relative; z-index:1; margin:24px 0;
+  }
+  .welcome-card h2 { color:#fff; font-size:1.3rem; margin-bottom:6px; }
+  .welcome-card p { color:var(--lteal); font-size:.92rem; margin-bottom:24px; line-height:1.5; }
+  .welcome-card input {
+    width:100%; padding:14px 18px; border-radius:12px; border:2px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.08); color:#fff; font-size:1.05rem; outline:none;
+    transition:all .3s;
+  }
+  .welcome-card input::placeholder { color:rgba(255,255,255,.35); }
+  .welcome-card input:focus { border-color:var(--teal); background:rgba(255,255,255,.12); }
+  .btn-start {
+    width:100%; margin-top:18px; padding:16px; border-radius:12px; border:none;
+    background:var(--gradient2); color:var(--navy); font-size:1.05rem; font-weight:800;
+    cursor:pointer; transition:all .2s; letter-spacing:.5px;
+  }
+  .btn-start:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 25px rgba(244,168,40,.4); }
+  .btn-start:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .welcome-card .input-group { margin-bottom:14px; }
+  .welcome-card .input-group label { display:block; font-size:.78rem; font-weight:600; color:var(--lteal); margin-bottom:6px; letter-spacing:.5px; }
+  .auth-toggle { color:var(--lteal); font-size:.88rem; margin-top:16px; text-align:center; }
+  .auth-toggle a { color:var(--gold); font-weight:700; cursor:pointer; text-decoration:underline; }
+  .auth-toggle a:hover { color:#fff; }
+  .auth-error { background:rgba(239,68,68,.2); border:1px solid rgba(239,68,68,.4); color:#FCA5A5; padding:10px 14px; border-radius:10px; font-size:.85rem; margin-bottom:14px; display:none; }
+  .auth-success { background:rgba(34,197,94,.2); border:1px solid rgba(34,197,94,.4); color:#86EFAC; padding:10px 14px; border-radius:10px; font-size:.85rem; margin-bottom:14px; display:none; }
+  .logout-btn {
+    display:flex; align-items:center; gap:6px; padding:8px 16px; margin:8px 20px;
+    border-radius:8px; border:1px solid rgba(255,255,255,.15); background:transparent;
+    color:rgba(255,255,255,.5); font-size:.8rem; font-weight:600; cursor:pointer; transition:all .2s;
+  }
+  .logout-btn:hover { background:rgba(239,68,68,.15); color:#FCA5A5; border-color:rgba(239,68,68,.3); }
+  .loading-spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── SIDEBAR ────────────────────────────────────────── */
+  #sidebar {
+    width:var(--sidebar-w); background:var(--navy); position:fixed; top:0; left:0;
+    height:100vh; display:flex; flex-direction:column; z-index:100; overflow-y:auto;
+  }
+  .sidebar-logo { padding:24px 20px 18px; border-bottom:1px solid rgba(255,255,255,.08); }
+  .sidebar-logo .logo-text { font-size:1.4rem; font-weight:900; color:#fff; letter-spacing:-1px; }
+  .sidebar-logo .logo-text span { background:var(--gradient2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .sidebar-logo .student-name { font-size:.8rem; color:var(--lteal); margin-top:4px; }
+  nav { padding:14px 0; flex:1; }
+  .nav-section { padding:10px 20px 4px; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.25); }
+  .nav-item {
+    display:flex; align-items:center; gap:10px; padding:10px 20px;
+    color:rgba(255,255,255,.6); font-size:.88rem; cursor:pointer;
+    border-left:3px solid transparent; transition:all .2s; font-weight:500;
+  }
+  .nav-item:hover { color:#fff; background:rgba(255,255,255,.06); }
+  .nav-item.active { color:#fff; background:rgba(0,180,216,.15); border-left-color:var(--teal); }
+  .nav-item .icon { font-size:1rem; width:20px; text-align:center; }
+  .nav-item .badge { margin-left:auto; font-size:.65rem; background:var(--green); color:#fff; border-radius:20px; padding:2px 8px; font-weight:700; }
+  .sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,.08); }
+  .xp-wrap { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .xp-label { font-size:.82rem; font-weight:800; color:var(--gold); }
+  .progress-bar-wrap { flex:1; background:rgba(255,255,255,.1); border-radius:20px; height:8px; overflow:hidden; }
+  .progress-bar-fill { background:var(--gradient1); height:100%; border-radius:20px; transition:width .6s ease-out; }
+  .progress-label { font-size:.72rem; color:rgba(255,255,255,.4); }
+  .streak-badge { display:flex; align-items:center; gap:6px; margin-top:10px; padding:8px 12px; background:rgba(244,168,40,.12); border-radius:10px; }
+  .streak-badge .streak-icon { font-size:1.1rem; }
+  .streak-badge .streak-text { font-size:.78rem; color:var(--gold); font-weight:600; }
+
+  /* ── MAIN ────────────────────────────────────────────── */
+  #main { margin-left:var(--sidebar-w); flex:1; min-height:100vh; }
+  .page { display:none; padding:32px 36px; max-width:1000px; }
+  .page.active { display:block; animation:fadeIn .35s ease-out; }
+  .page-header { margin-bottom:28px; }
+  .page-header h1 { font-size:1.8rem; font-weight:900; color:var(--navy); letter-spacing:-.5px; }
+  .page-header .subtitle { color:var(--gray); margin-top:6px; font-size:.95rem; line-height:1.5; }
+
+  /* ── STAT CARDS ─────────────────────────────────────── */
+  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card {
+    background:var(--card); border-radius:16px; padding:22px; box-shadow:0 2px 12px rgba(10,34,64,.06);
+    position:relative; overflow:hidden;
+  }
+  .stat-card::after {
+    content:''; position:absolute; top:0; right:0; width:80px; height:80px; border-radius:0 0 0 80px;
+    opacity:.08;
+  }
+  .stat-card:nth-child(1)::after { background:var(--teal); }
+  .stat-card:nth-child(2)::after { background:var(--purple); }
+  .stat-card:nth-child(3)::after { background:var(--green); }
+  .stat-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--gray); }
+  .stat-val { font-size:2.2rem; font-weight:900; color:var(--navy); margin:4px 0 2px; }
+  .stat-sub { font-size:.82rem; color:var(--teal); font-weight:600; }
+
+  /* ── MODULE CARDS ───────────────────────────────────── */
+  .section-title { font-size:1.15rem; font-weight:800; color:var(--navy); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .module-grid { display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+  .module-card {
+    background:var(--card); border-radius:16px; padding:22px; border:2px solid transparent;
+    box-shadow:0 2px 12px rgba(10,34,64,.06); transition:all .25s; cursor:pointer;
+    position:relative; overflow:hidden;
+  }
+  .module-card:hover:not(.locked) { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,180,216,.15); }
+  .module-card.locked { opacity:.5; cursor:not-allowed; filter:grayscale(.3); }
+  .module-card.completed { border-color:var(--green); }
+  .module-card.next-up { border-color:var(--teal); animation:glow 2s ease-in-out infinite; }
+  .module-card .m-emoji { font-size:2rem; margin-bottom:8px; }
+  .module-card .m-num { font-size:.7rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+  .module-card h3 { font-size:1.05rem; font-weight:800; margin-bottom:6px; }
+  .module-card p { font-size:.84rem; color:var(--gray); line-height:1.5; }
+  .module-card .m-footer { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
+  .m-duration { font-size:.78rem; color:var(--gray); display:flex; align-items:center; gap:4px; }
+  .m-status { font-size:.78rem; font-weight:700; padding:4px 12px; border-radius:20px; }
+  .m-status.done { background:#DCFCE7; color:#16A34A; }
+  .m-status.next { background:linear-gradient(135deg,#E0F4FD,#EDE9FE); color:var(--teal); }
+  .m-status.locked-s { background:var(--lgray); color:var(--gray); }
+  .m-check { position:absolute; top:14px; right:14px; font-size:1.3rem; }
+
+  /* ── MODULE DETAIL ──────────────────────────────────── */
+  .back-btn {
+    display:inline-flex; align-items:center; gap:6px; padding:8px 16px;
+    border-radius:10px; border:2px solid var(--lgray); background:#fff;
+    font-size:.85rem; font-weight:700; color:var(--navy); cursor:pointer;
+    margin-bottom:24px; transition:all .2s;
+  }
+  .back-btn:hover { border-color:var(--teal); color:var(--teal); transform:translateX(-2px); }
+  .lesson-card { background:var(--card); border-radius:18px; padding:32px; box-shadow:0 4px 20px rgba(10,34,64,.08); }
+  .lesson-card .module-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .lesson-card .module-header .mh-emoji { font-size:2.4rem; }
+  .lesson-card .module-header h2 { font-size:1.5rem; font-weight:900; }
+  .lesson-tag { display:inline-block; background:var(--gradient1); color:#fff; font-size:.75rem; font-weight:700; padding:4px 14px; border-radius:20px; margin-bottom:20px; }
+  .lesson-section { margin-bottom:28px; animation:slideIn .4s ease-out; }
+  .lesson-section h3 {
+    font-size:1.05rem; font-weight:800; color:var(--navy); margin-bottom:10px;
+    display:flex; align-items:center; gap:10px;
+    padding-bottom:8px; border-bottom:2px solid var(--lgray);
+  }
+  .lesson-section p { color:var(--gray); line-height:1.75; font-size:.93rem; }
+  .key-points { display:grid; gap:10px; margin-top:10px; }
+  .key-point {
+    display:flex; gap:12px; align-items:flex-start; background:var(--bg);
+    border-radius:12px; padding:14px 16px; transition:all .2s;
+  }
+  .key-point:hover { background:#E0F4FD; transform:translateX(4px); }
+  .key-point .kp-icon { font-size:1.2rem; flex-shrink:0; }
+  .key-point .kp-text { font-size:.88rem; color:var(--gray); line-height:1.5; }
+  .key-point .kp-text strong { color:var(--navy); }
+  .info-box { background:linear-gradient(135deg,#E0F4FD,#EDE9FE); border-radius:12px; padding:16px 18px; margin:20px 0; border-left:4px solid var(--teal); }
+  .info-box p { font-size:.88rem; color:var(--navy); line-height:1.65; }
+  .warn-box { background:linear-gradient(135deg,#FFF7E6,#FFF0F0); border-radius:12px; padding:16px 18px; margin:20px 0; border-left:4px solid var(--gold); }
+  .warn-box p { font-size:.88rem; color:#7A4F00; line-height:1.65; }
+  .fun-fact { background:linear-gradient(135deg,#F5F0FF,#FFF0F6); border-radius:12px; padding:16px 18px; margin:20px 0; border-left:4px solid var(--purple); }
+  .fun-fact p { font-size:.88rem; color:#5B21B6; line-height:1.65; }
+  .complete-btn {
+    width:100%; padding:16px; border-radius:12px; border:none;
+    background:var(--gradient1); color:#fff; font-size:1.05rem; font-weight:800;
+    cursor:pointer; margin-top:28px; transition:all .25s; letter-spacing:.5px;
+  }
+  .complete-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,180,216,.35); }
+  .complete-btn:disabled { background:#94A3B8; cursor:default; transform:none; box-shadow:none; color:#e2e8f0; }
+  .complete-btn.passed { background:var(--green)!important; color:#fff!important; }
+
+  /* ── QUIZ RESULTS PANEL ──────────────────────────────── */
+  .quiz-results {
+    margin-top:20px; padding:24px; border-radius:14px; text-align:center; animation:pop .4s ease-out;
+  }
+  .quiz-results.pass { background:linear-gradient(135deg,#DCFCE7,#D1FAE5); border:2px solid var(--green); }
+  .quiz-results.fail { background:linear-gradient(135deg,#FEF2F2,#FFF7E6); border:2px solid #F87171; }
+  .quiz-results .qr-icon { font-size:2.5rem; margin-bottom:8px; }
+  .quiz-results .qr-score { font-size:2rem; font-weight:900; margin:4px 0; }
+  .quiz-results.pass .qr-score { color:#16A34A; }
+  .quiz-results.fail .qr-score { color:#DC2626; }
+  .quiz-results .qr-msg { font-size:.95rem; color:var(--gray); margin-bottom:16px; line-height:1.5; }
+  .retry-btn {
+    display:inline-block; padding:14px 32px; border-radius:12px; border:none;
+    background:var(--gradient2); color:var(--navy); font-size:1rem; font-weight:800;
+    cursor:pointer; transition:all .2s; letter-spacing:.5px;
+  }
+  .retry-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(244,168,40,.4); }
+
+  /* ── CERT SCORES TABLE ───────────────────────────────── */
+  .cert-scores { margin:20px auto; max-width:400px; }
+  .cert-scores table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .cert-scores th { padding:8px 12px; text-align:left; border-bottom:2px solid var(--lgray); color:var(--navy); font-weight:700; }
+  .cert-scores td { padding:6px 12px; border-bottom:1px solid #f0f0f0; color:var(--gray); }
+  .cert-scores .cs-score { font-weight:800; text-align:right; }
+  .cert-scores .cs-avg { font-weight:900; color:var(--navy); font-size:.95rem; }
+
+  /* ── QUIZ ────────────────────────────────────────────── */
+  .quiz-section {
+    margin-top:32px; border-top:3px solid var(--lgray); padding-top:28px;
+  }
+  .quiz-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .quiz-header h3 { font-size:1.2rem; font-weight:900; }
+  .quiz-intro { font-size:.9rem; color:var(--gray); margin-bottom:20px; line-height:1.5; }
+  .quiz-score-bar { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:12px 16px; background:var(--bg); border-radius:12px; }
+  .quiz-score-bar .qs-label { font-size:.85rem; font-weight:700; color:var(--navy); }
+  .quiz-score-bar .qs-bar { flex:1; height:8px; background:var(--lgray); border-radius:20px; overflow:hidden; }
+  .quiz-score-bar .qs-fill { height:100%; background:var(--gradient3); border-radius:20px; transition:width .5s; }
+  .quiz-score-bar .qs-text { font-size:.85rem; font-weight:800; color:var(--teal); min-width:50px; text-align:right; }
+  .quiz-q { background:var(--bg); border-radius:14px; padding:18px; margin-bottom:14px; border:2px solid transparent; transition:border-color .3s; }
+  .quiz-q.answered-correct { border-color:var(--green); }
+  .quiz-q.answered-wrong { border-color:#FCA5A5; }
+  .quiz-q .q-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .quiz-q .q-num { background:var(--navy); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; flex-shrink:0; }
+  .quiz-q .q-text { font-size:.92rem; font-weight:700; color:var(--navy); line-height:1.4; }
+  .quiz-options { display:grid; gap:8px; }
+  .quiz-opt {
+    padding:12px 16px; border-radius:10px; border:2px solid var(--lgray);
+    background:#fff; font-size:.87rem; color:var(--gray); cursor:pointer; transition:all .2s;
+    text-align:left; font-weight:500; display:flex; align-items:center; gap:10px;
+  }
+  .quiz-opt:hover:not(:disabled) { border-color:var(--teal); color:var(--navy); background:#F0FDFF; transform:translateX(3px); }
+  .quiz-opt .opt-letter {
+    width:26px; height:26px; border-radius:50%; background:var(--lgray);
+    display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800;
+    color:var(--navy); flex-shrink:0; transition:all .2s;
+  }
+  .quiz-opt:hover:not(:disabled) .opt-letter { background:var(--teal); color:#fff; }
+  .quiz-opt.correct { border-color:var(--green); background:#F0FDF4; color:#15803D; font-weight:700; }
+  .quiz-opt.correct .opt-letter { background:var(--green); color:#fff; }
+  .quiz-opt.wrong { border-color:#EF4444; background:#FEF2F2; color:#DC2626; }
+  .quiz-opt.wrong .opt-letter { background:#EF4444; color:#fff; }
+  .quiz-opt:disabled { cursor:default; }
+  .quiz-feedback { font-size:.84rem; margin-top:8px; padding:10px 14px; border-radius:10px; line-height:1.5; animation:pop .3s ease-out; }
+  .quiz-feedback.ok { background:#DCFCE7; color:#15803D; }
+  .quiz-feedback.nope { background:#FEF2F2; color:#991B1B; }
+
+  /* ── SCORE TRACKER ──────────────────────────────────── */
+  .score-input-row { display:flex; gap:12px; margin-bottom:24px; align-items:flex-end; flex-wrap:wrap; }
+  .score-input-group { display:flex; flex-direction:column; gap:6px; }
+  .score-input-group label { font-size:.78rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; }
+  .score-input-group input {
+    padding:12px 14px; border-radius:10px; border:2px solid var(--lgray);
+    font-size:.95rem; outline:none; transition:all .2s; width:160px;
+  }
+  .score-input-group input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,180,216,.1); }
+  .add-score-btn {
+    padding:12px 22px; border-radius:10px; border:none; background:var(--gradient1);
+    color:#fff; font-weight:800; font-size:.9rem; cursor:pointer; transition:all .2s;
+  }
+  .add-score-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,180,216,.3); }
+  .card { background:var(--card); border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(10,34,64,.06); }
+  .score-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .score-table th { background:var(--navy); color:#fff; padding:12px 14px; text-align:left; font-size:.78rem; font-weight:700; letter-spacing:.5px; }
+  .score-table th:first-child { border-radius:10px 0 0 0; }
+  .score-table th:last-child { border-radius:0 10px 0 0; }
+  .score-table td { padding:12px 14px; border-bottom:1px solid var(--lgray); color:var(--gray); }
+  .score-table tr:last-child td { border-bottom:none; }
+  .score-table .score-val { font-weight:800; color:var(--navy); font-size:1rem; }
+  .score-band { display:inline-block; font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:12px; }
+  .band-poor { background:#FEE2E2; color:#DC2626; }
+  .band-fair { background:#FEF3C7; color:#D97706; }
+  .band-good { background:#DCFCE7; color:#16A34A; }
+  .band-very-good { background:#D1FAE5; color:#059669; }
+  .band-excellent { background:#BBF7D0; color:#047857; }
+  .del-btn { background:none; border:none; color:#DC2626; cursor:pointer; font-size:.85rem; opacity:.5; transition:all .2s; }
+  .del-btn:hover { opacity:1; transform:scale(1.2); }
+  .chart-wrap { background:var(--card); border-radius:16px; padding:24px; margin-bottom:20px; box-shadow:0 2px 12px rgba(10,34,64,.06); }
+  .empty-state { text-align:center; padding:40px; color:var(--gray); font-size:.95rem; }
+  .empty-state .empty-icon { font-size:3rem; margin-bottom:12px; }
+  .score-ranges { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .range-card { padding:16px; border-radius:14px; text-align:center; transition:all .2s; }
+  .range-card:hover { transform:translateY(-3px); }
+  .range-card .range-num { font-size:1.15rem; font-weight:900; }
+  .range-card .range-label { font-size:.82rem; font-weight:700; margin-top:4px; }
+  .range-card .range-desc { font-size:.76rem; margin-top:6px; line-height:1.4; }
+
+  /* ── CERTIFICATE ─────────────────────────────────────── */
+  #cert-locked { text-align:center; padding:60px 20px; }
+  #cert-locked .lock-icon { font-size:4rem; margin-bottom:16px; animation:float 3s ease-in-out infinite; }
+  #cert-locked h2 { font-size:1.3rem; font-weight:800; margin-bottom:8px; }
+  #cert-locked p { color:var(--gray); font-size:.95rem; }
+  #cert-locked .modules-remaining { display:flex; justify-content:center; gap:8px; margin-top:16px; }
+  #cert-locked .mod-dot { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:800; }
+  .mod-dot.filled { background:var(--green); color:#fff; }
+  .mod-dot.empty { background:var(--lgray); color:var(--gray); }
+  #cert-display { display:none; }
+  .cert-wrap {
+    background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(10,34,64,.12);
+    padding:60px; text-align:center; position:relative; overflow:hidden;
+    border:3px solid transparent; background-image:linear-gradient(#fff,#fff),var(--gradient2);
+    background-origin:border-box; background-clip:padding-box,border-box;
+  }
+  .cert-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:6px; background:var(--gradient2); }
+  .cert-logo { font-size:1.6rem; font-weight:900; color:var(--navy); margin-bottom:4px; }
+  .cert-logo span { background:var(--gradient2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .cert-divider { width:80px; height:3px; background:var(--gradient2); margin:16px auto; border-radius:2px; }
+  .cert-title { font-size:.85rem; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:var(--gray); margin-bottom:16px; }
+  .cert-body { font-size:1rem; color:var(--gray); margin-bottom:6px; }
+  .cert-name { font-size:2.4rem; font-weight:900; background:var(--gradient1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:12px 0; }
+  .cert-desc { font-size:.88rem; color:var(--gray); max-width:480px; margin:0 auto 24px; line-height:1.65; }
+  .cert-badges { display:flex; justify-content:center; gap:24px; margin:24px 0; }
+  .cert-badge { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .cert-badge .b-icon { font-size:1.8rem; }
+  .cert-badge .b-label { font-size:.72rem; color:var(--gray); font-weight:700; }
+  .cert-date { font-size:.82rem; color:var(--gray); margin-top:16px; }
+  .print-btn {
+    margin-top:24px; padding:14px 32px; border-radius:12px; border:none;
+    background:var(--gradient1); color:#fff; font-size:.95rem; font-weight:800;
+    cursor:pointer; transition:all .2s;
+  }
+  .print-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,180,216,.35); }
+
+  @media (max-width:900px) {
+    .module-grid { grid-template-columns:1fr; }
+    .stat-row { grid-template-columns:1fr; }
+    .score-ranges { grid-template-columns:1fr 1fr; }
+  }
+  @media print {
+    #sidebar,.back-btn,.print-btn,nav { display:none!important; }
+    #main { margin-left:0; }
+    .page { padding:0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ AUTH SCREEN ═══════ -->
+<div id="welcome-screen">
+  <div class="welcome-emoji">💳</div>
+  <div class="welcome-logo">Credi<span>Start</span></div>
+  <div class="welcome-tag">Your credit glow-up starts here.</div>
+
+  <!-- REGISTER FORM -->
+  <div class="welcome-card" id="register-form">
+    <h2>Create Your Account 🚀</h2>
+    <p>Sign up to start your credit course. Your progress saves to your account so you can pick up from any device.</p>
+    <div id="register-error" class="auth-error"></div>
+    <div class="input-group">
+      <label>Full Name</label>
+      <input type="text" id="reg-name" placeholder="Your full name" maxlength="50"/>
+    </div>
+    <div class="input-group">
+      <label>Email Address</label>
+      <input type="email" id="reg-email" placeholder="you@email.com" maxlength="100"/>
+    </div>
+    <div class="input-group">
+      <label>Password (6+ characters)</label>
+      <input type="password" id="reg-password" placeholder="Create a password" maxlength="100"/>
+    </div>
+    <button class="btn-start" id="reg-btn" onclick="handleRegister()">CREATE ACCOUNT →</button>
+    <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Log in</a></div>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div class="welcome-card" id="login-form" style="display:none">
+    <h2>Welcome Back 👋</h2>
+    <p>Log in to continue your CrediStart credit course right where you left off.</p>
+    <div id="login-error" class="auth-error"></div>
+    <div class="input-group">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="you@email.com" maxlength="100"/>
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Your password" maxlength="100"/>
+    </div>
+    <button class="btn-start" id="login-btn" onclick="handleLogin()">LOG IN →</button>
+    <div class="auth-toggle">Need an account? <a onclick="showRegister()">Sign up</a></div>
+  </div>
+</div>
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">Credi<span>Start</span></div>
+    <div class="student-name" id="sidebar-name">Student Portal</div>
+  </div>
+  <nav>
+    <div class="nav-section">Home Base</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-section">Your Lessons</div>
+    <div class="nav-item" id="nav-m1" onclick="openModule(1)"><span class="icon">📖</span> How Credit Works</div>
+    <div class="nav-item" id="nav-m2" onclick="openModule(2)"><span class="icon">🧮</span> The Five Pillars</div>
+    <div class="nav-item" id="nav-m3" onclick="openModule(3)"><span class="icon">💳</span> Your First Card</div>
+    <div class="nav-item" id="nav-m4" onclick="openModule(4)"><span class="icon">📈</span> Power Habits</div>
+    <div class="nav-item" id="nav-m5" onclick="openModule(5)"><span class="icon">🛡️</span> Bounce Back</div>
+    <div class="nav-item" id="nav-m6" onclick="openModule(6)"><span class="icon">🚀</span> Level Up: Your Future</div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('tracker')"><span class="icon">📊</span> Score Tracker</div>
+    <div class="nav-item" id="nav-cert" onclick="showPage('certificate')"><span class="icon">🏆</span> My Certificate</div>
+    <div class="nav-section">Account</div>
+    <button class="logout-btn" onclick="handleLogout()">🚪 Log Out</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="xp-wrap">
+      <span class="xp-label" id="xp-label">0 XP</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="sidebar-progress" style="width:0%"></div></div>
+    </div>
+    <div class="progress-label" id="sidebar-progress-label">0 of 6 modules complete</div>
+    <div class="streak-badge">
+      <span class="streak-icon">🔥</span>
+      <span class="streak-text" id="streak-text">Start your learning streak!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MAIN ═══════ -->
+<div id="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h1 id="dash-greeting">Yo! Let's build that credit 💪</h1>
+      <p class="subtitle">Here's where you're at. Every module you crush brings you closer to financial freedom.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Modules Cleared</div>
+        <div class="stat-val" id="stat-completed">0/6</div>
+        <div class="stat-sub" id="stat-complete-sub">Let's get it!</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Quiz Average</div>
+        <div class="stat-val" id="stat-quiz">—</div>
+        <div class="stat-sub" id="stat-quiz-sub">No quizzes yet</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Credit Score</div>
+        <div class="stat-val" id="stat-score">—</div>
+        <div class="stat-sub" id="stat-score-sub">Start tracking!</div>
+      </div>
+    </div>
+    <div class="section-title">📚 Your Modules</div>
+    <div class="module-grid" id="module-grid"></div>
+  </div>
+
+  <!-- MODULE DETAIL -->
+  <div class="page" id="page-module">
+    <button class="back-btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    <div id="module-content"></div>
+  </div>
+
+  <!-- SCORE TRACKER -->
+  <div class="page" id="page-tracker">
+    <div class="page-header">
+      <h1>📊 Score Tracker</h1>
+      <p class="subtitle">Track your credit score over time. Watching that number climb hits different.</p>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="scoreChart" height="90"></canvas>
+      <div id="chart-empty" class="empty-state">
+        <div class="empty-icon">📈</div>
+        <p>Add your first score to start tracking your glow-up.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="section-title">➕ Log a Score</div>
+      <div class="score-input-row">
+        <div class="score-input-group"><label>Credit Score (300–850)</label><input type="number" id="score-val-input" min="300" max="850" placeholder="e.g. 680"/></div>
+        <div class="score-input-group"><label>Date</label><input type="date" id="score-date-input"/></div>
+        <div class="score-input-group"><label>Note (optional)</label><input type="text" id="score-note-input" placeholder="e.g. Got first card!" style="width:200px"/></div>
+        <button class="add-score-btn" onclick="addScore()">+ Add</button>
+      </div>
+      <div class="section-title" style="margin-top:16px">📋 History</div>
+      <div id="score-table-wrap"><div class="empty-state"><div class="empty-icon">📋</div><p>Nothing here yet — add your first entry above!</p></div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">🎯 Score Ranges — Know Where You Stand</div>
+      <div class="score-ranges">
+        <div class="range-card" style="background:#FEE2E2"><div class="range-num" style="color:#DC2626">300–579</div><div class="range-label" style="color:#991B1B">Poor</div><div class="range-desc" style="color:#7F1D1D">Approval's tough. Focus on building history &amp; paying on time.</div></div>
+        <div class="range-card" style="background:#FEF3C7"><div class="range-num" style="color:#D97706">580–669</div><div class="range-label" style="color:#92400E">Fair</div><div class="range-desc" style="color:#78350F">Getting there! You'll get approved but with higher rates.</div></div>
+        <div class="range-card" style="background:#DCFCE7"><div class="range-num" style="color:#16A34A">670–739</div><div class="range-label" style="color:#14532D">Good</div><div class="range-desc" style="color:#15803D">Solid. Most cards &amp; loans will approve you. Keep going!</div></div>
+        <div class="range-card" style="background:#D1FAE5"><div class="range-num" style="color:#059669">740–799</div><div class="range-label" style="color:#065F46">Very Good</div><div class="range-desc" style="color:#047857">Now we're talking! You unlock great rates here.</div></div>
+        <div class="range-card" style="background:#BBF7D0"><div class="range-num" style="color:#047857">800–850</div><div class="range-label" style="color:#064E3B">Exceptional</div><div class="range-desc" style="color:#065F46">Elite tier. You're basically a lender's dream.</div></div>
+        <div class="range-card" style="background:var(--bg)"><div style="font-size:1.8rem;margin-bottom:6px">🎯</div><div class="range-label" style="color:var(--navy)">Your Goal</div><div class="range-desc" style="color:var(--gray)">Hit <strong>700+</strong> within your first 12 months. You got this.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE -->
+  <div class="page" id="page-certificate">
+    <div class="page-header"><h1>🏆 Certificate of Completion</h1><p class="subtitle">Finish all 6 modules to earn your official CrediStart certification.</p></div>
+    <div id="cert-locked">
+      <div class="lock-icon">🔒</div>
+      <h2>Not Unlocked Yet</h2>
+      <p id="cert-locked-msg">Complete all 6 modules to unlock your certificate.</p>
+      <div class="modules-remaining" id="cert-dots"></div>
+    </div>
+    <div id="cert-display">
+      <div class="cert-wrap" id="cert-printable">
+        <div class="cert-logo">Credi<span>Start</span></div>
+        <div class="cert-title">Certificate of Completion</div>
+        <div class="cert-divider"></div>
+        <div class="cert-body">This certifies that</div>
+        <div class="cert-name" id="cert-student-name">Student</div>
+        <div class="cert-body">has successfully completed the</div>
+        <div style="font-size:1.2rem;font-weight:900;color:var(--navy);margin:8px 0">CrediStart Credit Literacy Course</div>
+        <div class="cert-desc">Demonstrating mastery of credit scoring, responsible habits, smart card selection, recovery strategies, and long-term financial planning.</div>
+        <div class="cert-scores" id="cert-scores-table"></div>
+        <div class="cert-badges">
+          <div class="cert-badge"><div class="b-icon">📖</div><div class="b-label">6 Modules</div></div>
+          <div class="cert-badge"><div class="b-icon">✅</div><div class="b-label">All Quizzes</div></div>
+          <div class="cert-badge"><div class="b-icon">💳</div><div class="b-label">Credit Ready</div></div>
+          <div class="cert-badge"><div class="b-icon">🌟</div><div class="b-label">Certified</div></div>
+        </div>
+        <div class="cert-divider"></div>
+        <div class="cert-date" id="cert-date">Issued: —</div>
+        <div style="font-size:.75rem;color:var(--gray);margin-top:6px">CrediStart LLC · Building Tomorrow's Credit-Smart Generation</div>
+      </div>
+      <div style="text-align:center"><button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE (Server-backed)
+// ═══════════════════════════════════════════════════════
+let state = { studentName:'', completedModules:[], quizScores:{}, scores:[], _quizAnswers:{}, _quizSelections:{}, _quizMetrics:{} };
+let activeModuleSession = null;
+let saveTimeout = null;
+
+function save() {
+  // Debounce saves to avoid hammering the server
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(()=>{
+    fetch('/api/progress', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',
+      body: JSON.stringify({
+        completedModules: state.completedModules,
+        quizScores: state.quizScores,
+        quizAnswers: state._quizAnswers,
+        quizSelections: state._quizSelections,
+        quizMetrics: state._quizMetrics,
+        creditScores: state.scores
+      })
+    }).catch(err => console.error('Save failed:', err));
+  }, 300);
+}
+
+async function loadFromServer() {
+  try {
+    const res = await fetch('/api/progress', { credentials:'same-origin' });
+    if(!res.ok) return;
+    const data = await res.json();
+    state.completedModules = data.completedModules || [];
+    state.quizScores = data.quizScores || {};
+    state._quizAnswers = data.quizAnswers || {};
+    state._quizSelections = data.quizSelections || {};
+    state._quizMetrics = data.quizMetrics || {};
+    state.scores = data.creditScores || [];
+  } catch(e) { console.error('Load failed:', e); }
+}
+
+
+function ensureQuizMetric(moduleId) {
+  if(!state._quizMetrics) state._quizMetrics = {};
+  if(!state._quizMetrics[moduleId]) {
+    state._quizMetrics[moduleId] = {
+      firstStartedAt: null,
+      lastOpenedAt: null,
+      completedAt: null,
+      opens: 0,
+      lessonReadMs: 0,
+      timeToFirstAnswerMs: [],
+      questionResponseMs: {},
+      attempts: [],
+      totalQuizAnswerMs: 0,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      latestScore: null,
+      latestAttemptAt: null,
+      currentAttempt: null
+    };
+  }
+  const metric = state._quizMetrics[moduleId];
+  if(!metric.questionResponseMs || typeof metric.questionResponseMs !== 'object') metric.questionResponseMs = {};
+  if(!Array.isArray(metric.timeToFirstAnswerMs)) metric.timeToFirstAnswerMs = [];
+  if(!Array.isArray(metric.attempts)) metric.attempts = [];
+  return metric;
+}
+
+function startModuleSession(moduleId) {
+  const metric = ensureQuizMetric(moduleId);
+  const nowIso = new Date().toISOString();
+  if(!metric.firstStartedAt) metric.firstStartedAt = nowIso;
+  metric.lastOpenedAt = nowIso;
+  metric.opens = Number(metric.opens || 0) + 1;
+  if(!metric.currentAttempt) {
+    metric.currentAttempt = {
+      startedAt: nowIso,
+      firstAnswerAt: null,
+      lastInteractionAt: null,
+      answerMsByQuestion: {},
+      answered: {},
+      answerCount: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      lessonReadMs: 0,
+      totalAnswerMs: 0
+    };
+  }
+  activeModuleSession = {
+    moduleId,
+    openedAt: Date.now(),
+    lastQuestionStartedAt: Date.now(),
+    hasAnswered: Object.keys((state._quizAnswers && state._quizAnswers[moduleId]) || {}).length > 0
+  };
+  save();
+}
+
+function trackModuleExit(reason) {
+  if(!activeModuleSession) return;
+  const metric = ensureQuizMetric(activeModuleSession.moduleId);
+  const now = Date.now();
+  const currentAttempt = metric.currentAttempt;
+  if(currentAttempt) {
+    if(!activeModuleSession.hasAnswered) {
+      const extraRead = Math.max(0, now - activeModuleSession.openedAt);
+      currentAttempt.lessonReadMs = Number(currentAttempt.lessonReadMs || 0) + extraRead;
+      metric.lessonReadMs = Number(metric.lessonReadMs || 0) + extraRead;
+    } else if(activeModuleSession.lastQuestionStartedAt) {
+      currentAttempt.lastInteractionAt = new Date().toISOString();
+    }
+  }
+  activeModuleSession = null;
+  save();
+}
+
+function recordQuizAnswerMetric(moduleId, qIdx, isCorrect) {
+  const metric = ensureQuizMetric(moduleId);
+  if(!activeModuleSession || activeModuleSession.moduleId !== moduleId) startModuleSession(moduleId);
+  const now = Date.now();
+  const currentAttempt = metric.currentAttempt || { startedAt: new Date().toISOString(), answerMsByQuestion:{}, answered:{}, answerCount:0, correctCount:0, wrongCount:0, lessonReadMs:0, totalAnswerMs:0 };
+  metric.currentAttempt = currentAttempt;
+
+  if(!currentAttempt.firstAnswerAt && activeModuleSession) {
+    const leadMs = Math.max(0, now - activeModuleSession.openedAt);
+    currentAttempt.firstAnswerAt = new Date(now).toISOString();
+    currentAttempt.lessonReadMs = Number(currentAttempt.lessonReadMs || 0) + leadMs;
+    metric.lessonReadMs = Number(metric.lessonReadMs || 0) + leadMs;
+    metric.timeToFirstAnswerMs.push(leadMs);
+  }
+
+  const elapsed = Math.max(0, now - (activeModuleSession?.lastQuestionStartedAt || now));
+  currentAttempt.answerMsByQuestion[qIdx] = Number(currentAttempt.answerMsByQuestion[qIdx] || 0) + elapsed;
+  currentAttempt.totalAnswerMs = Number(currentAttempt.totalAnswerMs || 0) + elapsed;
+  metric.totalQuizAnswerMs = Number(metric.totalQuizAnswerMs || 0) + elapsed;
+  metric.questionResponseMs[qIdx] = Number(metric.questionResponseMs[qIdx] || 0) + elapsed;
+
+  if(currentAttempt.answered[qIdx] === undefined) {
+    currentAttempt.answerCount = Number(currentAttempt.answerCount || 0) + 1;
+    currentAttempt.answered[qIdx] = isCorrect ? 1 : 0;
+    if(isCorrect) {
+      currentAttempt.correctCount = Number(currentAttempt.correctCount || 0) + 1;
+      metric.correctAnswers = Number(metric.correctAnswers || 0) + 1;
+    } else {
+      currentAttempt.wrongCount = Number(currentAttempt.wrongCount || 0) + 1;
+      metric.wrongAnswers = Number(metric.wrongAnswers || 0) + 1;
+    }
+  }
+
+  currentAttempt.lastInteractionAt = new Date(now).toISOString();
+  if(activeModuleSession) {
+    activeModuleSession.hasAnswered = true;
+    activeModuleSession.lastQuestionStartedAt = now;
+  }
+}
+
+function finalizeQuizAttempt(moduleId, pct, passed, totalQ) {
+  const metric = ensureQuizMetric(moduleId);
+  const attempt = metric.currentAttempt || { startedAt: new Date().toISOString(), firstAnswerAt: null, answerMsByQuestion:{}, answered:{}, answerCount:0, correctCount:0, wrongCount:0, lessonReadMs:0, totalAnswerMs:0 };
+  const nowIso = new Date().toISOString();
+  const answersRecorded = Object.keys(attempt.answerMsByQuestion || {}).length;
+  const avgQuestionMs = answersRecorded ? Math.round(Object.values(attempt.answerMsByQuestion).reduce((s,v)=>s+Number(v||0),0) / answersRecorded) : 0;
+  metric.latestScore = pct;
+  metric.latestAttemptAt = nowIso;
+  metric.attempts.push({
+    startedAt: attempt.startedAt || nowIso,
+    submittedAt: nowIso,
+    score: pct,
+    passed: !!passed,
+    totalQuestions: totalQ,
+    answerCount: attempt.answerCount || 0,
+    correctCount: attempt.correctCount || 0,
+    wrongCount: attempt.wrongCount || 0,
+    lessonReadMs: Number(attempt.lessonReadMs || 0),
+    totalAnswerMs: Number(attempt.totalAnswerMs || 0),
+    avgQuestionMs
+  });
+  metric.attempts = metric.attempts.slice(-20);
+  if(passed && !metric.completedAt) metric.completedAt = nowIso;
+  metric.currentAttempt = null;
+  if(activeModuleSession && activeModuleSession.moduleId === moduleId) {
+    activeModuleSession.lastQuestionStartedAt = Date.now();
+  }
+  save();
+}
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+function showLogin() {
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('login-error').style.display = 'none';
+}
+function showRegister() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+  document.getElementById('register-error').style.display = 'none';
+}
+
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const errEl = document.getElementById('register-error');
+  const btn = document.getElementById('reg-btn');
+
+  if(!name||!email||!password){ errEl.textContent='Please fill in all fields.'; errEl.style.display='block'; return; }
+  if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; errEl.style.display='block'; return; }
+
+  btn.disabled=true; btn.innerHTML='<span class="loading-spinner"></span>Creating account...';
+  errEl.style.display='none';
+
+  try {
+    const res = await fetch('/api/register', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+      body: JSON.stringify({name, email, password})
+    });
+    const data = await res.json();
+    if(!res.ok){ errEl.textContent=data.error||'Registration failed.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='CREATE ACCOUNT →'; return; }
+    state.studentName = data.user.name;
+    await loadFromServer();
+    document.getElementById('welcome-screen').classList.add('hidden');
+    init();
+  } catch(e){
+    errEl.textContent='Connection error. Is the server running?'; errEl.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='CREATE ACCOUNT →';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if(!email||!password){ errEl.textContent='Please enter your email and password.'; errEl.style.display='block'; return; }
+
+  btn.disabled=true; btn.innerHTML='<span class="loading-spinner"></span>Logging in...';
+  errEl.style.display='none';
+
+  try {
+    const res = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if(!res.ok){ errEl.textContent=data.error||'Login failed.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='LOG IN →'; return; }
+    state.studentName = data.user.name;
+    await loadFromServer();
+    document.getElementById('welcome-screen').classList.add('hidden');
+    init();
+  } catch(e){
+    errEl.textContent='Connection error. Is the server running?'; errEl.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='LOG IN →';
+}
+
+async function handleLogout() {
+  await fetch('/api/logout', { method:'POST', credentials:'same-origin' });
+  state = { studentName:'', completedModules:[], quizScores:{}, scores:[], _quizAnswers:{}, _quizSelections:{}, _quizMetrics:{} };
+  activeModuleSession = null;
+  document.getElementById('welcome-screen').classList.remove('hidden');
+  showLogin();
+}
+
+// Enter key support for forms
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  if(document.getElementById('register-form').style.display !== 'none' && document.activeElement.closest('#register-form')) handleRegister();
+  if(document.getElementById('login-form').style.display !== 'none' && document.activeElement.closest('#login-form')) handleLogin();
+});
+
+window.addEventListener('beforeunload', ()=> trackModuleExit('unload'));
+document.addEventListener('visibilitychange', ()=> { if(document.hidden) trackModuleExit('hidden'); });
+
+// ═══════════════════════════════════════════════════════
+// MODULE DATA (with expanded quizzes!)
+// ═══════════════════════════════════════════════════════
+const MODULES = [
+  {
+    id:1, title:'How Credit Works', duration:'30 min', emoji:'📖',
+    desc:"What's a credit score? Who decides it? Why should you care? Let's break it all down.",
+    color:'#E0F4FD', accent:'#00B4D8',
+    lessons:[
+      { heading:'🤔 What Even IS a Credit Score?',
+        body:`Think of your credit score as your financial GPA — except it follows you for life. It's a three-digit number between <strong>300 and 850</strong> that tells lenders, landlords, and even some employers how reliable you are with money. A higher number = more trust = better deals. The average score in the US is about 715, but young adults (under 25) average around 679. The good news? You're starting early, which gives you a massive advantage.`},
+      { heading:'🏛️ Who\'s Keeping Score?',
+        body:`Two main companies create scoring formulas: <strong>FICO</strong> (used by about 90% of lenders) and <strong>VantageScore</strong>. But they don't collect the data themselves. That job belongs to three credit bureaus: <strong>Equifax, Experian, and TransUnion</strong>. These bureaus collect info from your banks, card issuers, and lenders, then feed it into the scoring models. Since each bureau might have slightly different data, your score can vary a few points between them — totally normal.`},
+      { heading:'🎯 Why Should You Actually Care?',
+        body:`Real talk — your credit score affects more of your life than you probably think. Want your own apartment? Landlords check credit. Buying a car? Your score determines your interest rate (and whether you even get approved). Need a phone plan? Credit check. Mortgage someday? Huge credit check. Some employers even check credit for certain jobs. A great score literally saves you <strong>hundreds of thousands of dollars</strong> over your lifetime in lower interest rates alone. Starting now is one of the smartest financial moves you'll ever make.`}
+    ],
+    infoBox:"💡 You can check your credit reports for free every week at AnnualCreditReport.com — and checking your own report is a \"soft inquiry\" so it will <strong>never</strong> hurt your score. Do it!",
+    funFact:"🧠 Fun fact: The FICO scoring model was invented in 1989 — before your parents probably had email. It's been the dominant scoring system for over 35 years.",
+    warnBox:"⚠️ Myth alert: \"I need to carry a balance to build credit.\" NOPE. This is 100% false and costs people millions in unnecessary interest. Pay in full, every time.",
+    keyPoints:[
+      { icon:'🎯', text:'<strong>300–850</strong> is the score range. 670+ is considered "good." Your goal: get there fast.' },
+      { icon:'🏦', text:'<strong>3 credit bureaus</strong> track your data: Equifax, Experian, TransUnion.' },
+      { icon:'💰', text:'A high score = lower interest rates = you literally keep <strong>more of your money</strong>.' },
+      { icon:'📱', text:'Check your credit reports <strong>for free</strong> weekly — it\'s your right by law.' },
+      { icon:'🧠', text:'FICO is used by <strong>90% of lenders</strong> — it\'s the score that matters most.' }
+    ],
+    quiz:[
+      { q:'What is the highest possible FICO credit score?', opts:['750','800','850','900'], correct:2, explanation:'The FICO range is 300–850. A perfect 850 is rare but achievable!' },
+      { q:'Which three companies collect your credit data?', opts:['Visa, Mastercard, Amex','Equifax, Experian, TransUnion','FICO, VantageScore, Experian','IRS, FTC, CFPB'], correct:1, explanation:'Equifax, Experian, and TransUnion are the three major credit bureaus that collect your data.' },
+      { q:'What percentage of lenders use FICO scores?', opts:['About 50%','About 70%','About 90%','100%'], correct:2, explanation:'About 90% of top lenders use FICO scores to make lending decisions.' },
+      { q:'Does checking your own credit report hurt your score?', opts:['Yes, always','Only if you check more than once','No, never','Only on weekdays'], correct:2, explanation:'Checking your own report is a "soft inquiry" — it never affects your score. Check it often!' },
+      { q:'What is the average credit score for adults under 25?', opts:['580','620','679','720'], correct:2, explanation:'Young adults average around 679. Starting your credit journey early with good habits can put you well above that.' },
+      { q:'Which of these does NOT typically require a credit check?', opts:['Renting an apartment','Opening a gym membership','Getting a car loan','Getting a mortgage'], correct:1, explanation:'While apartments, car loans, and mortgages all require credit checks, a standard gym membership usually does not.' },
+      { q:'How often can you check your full credit report for free?', opts:['Once per year','Once per month','Once per week','Never — it costs money'], correct:2, explanation:'Since 2023, you can check your full credit reports for free every week at AnnualCreditReport.com.' }
+    ]
+  },
+  {
+    id:2, title:'The Five Pillars of Your Score', duration:'45 min', emoji:'🧮',
+    desc:'Your score is built on 5 factors. Master them and you master credit. Period.',
+    color:'#F0FDF4', accent:'#22C55E',
+    lessons:[
+      { heading:'💸 Pillar 1: Payment History (35%)',
+        body:`This is THE biggest factor — over a third of your entire score. It answers one question: do you pay your bills on time? Even <strong>one late payment</strong> (30+ days late) can tank your score by 50–100 points and stays on your report for <strong>7 years</strong>. The fix is simple: set up autopay for at least the minimum payment on every account you have. This single habit protects you more than anything else.`},
+      { heading:'📊 Pillar 2: Credit Utilization (30%)',
+        body:`This is how much of your available credit you're using right now. If your card has a $1,000 limit and you owe $300, that's 30% utilization. The rule: <strong>stay below 30%</strong>, and below 10% for the best scores. This gets calculated per card AND across all your cards combined. Pro move: if you need to spend a lot one month, pay some down before your statement closes (that's when utilization gets reported).`},
+      { heading:'⏳ Pillar 3: Length of Credit History (15%)',
+        body:`How long have you had credit? Longer = better. This is why you should <strong>never close your oldest credit card</strong> — even if you never use it. The average age of all your accounts matters too. If you have one card that's 3 years old and open a new one, your average age drops to 1.5 years. Starting early gives you a huge edge over people who wait until their mid-20s.`},
+      { heading:'🔀 Pillar 4: Credit Mix (10%)',
+        body:`Lenders like to see you can handle different types of credit: credit cards (revolving credit), car loans (installment credit), student loans, etc. You don't need to go out and get a car loan just for this — it'll naturally diversify over time. Just know that having ONLY credit cards is less ideal than having credit cards plus a student loan, for example.`},
+      { heading:'🔍 Pillar 5: New Credit Inquiries (10%)',
+        body:`Every time you apply for credit, the lender does a "hard inquiry" on your report. Each one can drop your score by 5–10 points. Multiple applications in a short period look desperate to lenders. The exception: rate shopping for one specific loan type (auto, mortgage, student) within a 14–45 day window counts as a single inquiry. But for credit cards, every application is a separate hit.`}
+    ],
+    infoBox:'💡 Payment history + utilization = <strong>65% of your score</strong>. These are your power moves. Nail these two and you\'re golden.',
+    funFact:'🧠 Your utilization resets every month when your statement closes. Even if you had high utilization last month, lowering it this month immediately helps your score. Credit has no memory for utilization!',
+    warnBox:'⚠️ Huge myth: "Carrying a small balance helps my score." Absolutely not. Paying in full every month builds the same history AND you avoid paying interest. Always. Pay. In. Full.',
+    keyPoints:[
+      { icon:'💸', text:'<strong>Payment History (35%)</strong> — The king. Never miss a payment. Autopay = your best friend.' },
+      { icon:'📊', text:'<strong>Utilization (30%)</strong> — Keep it under 30%. Under 10% for maximum score boost.' },
+      { icon:'⏳', text:'<strong>Credit Length (15%)</strong> — Don\'t close old cards. Time is your ally.' },
+      { icon:'🔀', text:'<strong>Credit Mix (10%)</strong> — Variety helps, but don\'t force it. It builds naturally.' },
+      { icon:'🔍', text:'<strong>New Inquiries (10%)</strong> — Each app can cost 5–10 points. Apply only when needed.' }
+    ],
+    quiz:[
+      { q:'What is the largest factor in your FICO score?', opts:['Credit Mix','New Inquiries','Payment History','Credit Utilization'], correct:2, explanation:'Payment history is 35% of your FICO score — the biggest single factor.' },
+      { q:'What utilization percentage should you try to stay below?', opts:['50%','30%','15%','5%'], correct:1, explanation:'Staying below 30% is the standard rule. Below 10% is even better for maximizing your score.' },
+      { q:'How long does a late payment stay on your credit report?', opts:['1 year','3 years','7 years','10 years'], correct:2, explanation:'Late payments remain on your credit report for 7 years, though their impact fades over time.' },
+      { q:'Why should you NEVER close your oldest credit card?', opts:['You\'ll lose your rewards points','It shortens your credit history length','It increases your credit mix','It triggers a hard inquiry'], correct:1, explanation:'Closing your oldest card shortens your average account age, which can hurt the 15% of your score based on credit history length.' },
+      { q:'How many points can a single hard inquiry drop your score?', opts:['0 points','1–2 points','5–10 points','25–50 points'], correct:2, explanation:'A single hard inquiry typically drops your score by 5–10 points and stays on your report for 2 years.' },
+      { q:'You have a $2,000 credit limit. What\'s the MAX balance you should carry at statement close?', opts:['$2,000','$1,000','$600','$200'], correct:2, explanation:'30% of $2,000 = $600. Staying at or below $600 keeps you within the recommended utilization range.' },
+      { q:'Which TWO pillars together make up 65% of your score?', opts:['Credit Mix + Payment History','Payment History + Utilization','Utilization + Credit Length','New Inquiries + Credit Mix'], correct:1, explanation:'Payment History (35%) + Credit Utilization (30%) = 65% of your total score. Master these two first.' },
+      { q:'Does your credit utilization ratio "remember" last month?', opts:['Yes, it\'s cumulative','Yes, it averages 6 months','No, it resets monthly','It depends on the lender'], correct:2, explanation:'Utilization resets every billing cycle. If you lower it this month, the improvement shows right away.' }
+    ]
+  },
+  {
+    id:3, title:'Getting Started the Right Way', duration:'45 min', emoji:'💳',
+    desc:"Time to get your first card. Here's how to do it without the rookie mistakes.",
+    color:'#FFF7E6', accent:'#F4A828',
+    lessons:[
+      { heading:'🔒 Secured Cards vs. Student Cards',
+        body:`No credit history? No problem. You've got two great entry points. A <strong>secured credit card</strong> requires a refundable deposit (usually $200–$500) that becomes your credit limit. It's basically training wheels — low risk, guaranteed approval, and it builds your credit just like a regular card. A <strong>student credit card</strong> is an unsecured card designed for students with limited history — no deposit needed, often with cashback rewards and no annual fee. Either option works great as your first card.`},
+      { heading:'👥 The Authorized User Hack',
+        body:`Here's a cheat code for building credit fast: ask a parent or trusted family member with a long, positive credit history to add you as an <strong>authorized user</strong> on one of their cards. Their years of good history show up on YOUR credit report — instantly. You don't even need to use the physical card. This can give you a head start of years worth of credit history overnight. Just make sure the card they add you to has low utilization and no missed payments.`},
+      { heading:'🔎 What to Look for in a First Card',
+        body:`Keep it simple. Your first card should have: <strong>no annual fee</strong> (why pay for something when free options exist?), a reasonable credit limit ($300–$1,000), simple cashback rewards (1–2%), and ideally reports to all three bureaus. Skip cards with annual fees, complex reward tiers, or shady "subprime" lenders. You're building a foundation, not chasing points.`},
+      { heading:'⚡ Set Up Autopay Immediately',
+        body:`The literal first thing you do after your card arrives: <strong>set up autopay for the full statement balance</strong>. This means your card automatically pays itself off every month. You'll never miss a payment, never pay interest, and never have to stress about it. If you can't always pay the full balance, at minimum set autopay for the minimum payment — then manually pay more when you can. But full balance autopay is the move.`}
+    ],
+    infoBox:'💡 The Discover it® Student Cash Back card matches all the cashback you earn in your first year. So 1% back becomes 2% back. It\'s one of the best starter cards out there.',
+    funFact:'🧠 Being added as an authorized user can add years of credit history to your report overnight. Some people go from no score to a 700+ score with this one move.',
+    warnBox:'⚠️ Stay away from store credit cards (like retail store cards) as your FIRST card. They often have 25–30% interest rates and limited usefulness. Get a general-purpose Visa or Mastercard first.',
+    keyPoints:[
+      { icon:'🔒', text:'<strong>Secured cards</strong> = guaranteed approval, low risk, great first card option.' },
+      { icon:'👥', text:'The <strong>authorized user trick</strong> can jumpstart your credit history overnight.' },
+      { icon:'🚫', text:'Your first card should have <strong>NO annual fee</strong>. Non-negotiable.' },
+      { icon:'⚡', text:'Set up <strong>autopay for the full balance</strong> the second you get the card.' },
+      { icon:'📱', text:'Download your card issuer\'s app. Notifications for every purchase = awareness = control.' }
+    ],
+    quiz:[
+      { q:'What is a secured credit card?', opts:['A card with fraud protection','A card backed by a cash deposit you provide','A card with a PIN number','A card only for online purchases'], correct:1, explanation:'A secured card requires a refundable deposit that becomes your credit limit. It\'s the easiest way to start building credit.' },
+      { q:'What does being an "authorized user" mean?', opts:['You apply for your own card','You\'re added to someone else\'s card account','You co-sign a loan','You get a higher credit limit'], correct:1, explanation:'An authorized user is added to another person\'s account and benefits from their credit history on their own report.' },
+      { q:'What\'s the first thing you should do when your new card arrives?', opts:['Make a big purchase','Set up autopay for full balance','Close your savings account','Apply for a second card'], correct:1, explanation:'Setting up autopay for the full statement balance is the #1 priority. It prevents missed payments and interest charges.' },
+      { q:'Which is NOT a recommended quality for a first credit card?', opts:['No annual fee','Simple cashback rewards','High annual fee with premium perks','Reports to all 3 bureaus'], correct:2, explanation:'Premium cards with high annual fees aren\'t worth it as a first card. Keep it simple: no fee, basic rewards, builds credit.' },
+      { q:'What interest rate range do retail store credit cards typically have?', opts:['5–10%','12–18%','25–30%','35–45%'], correct:2, explanation:'Retail store cards often carry very high interest rates (25–30%), making them a poor choice as a first card.' },
+      { q:'When an authorized user\'s parent has good credit, what happens to the student\'s report?', opts:['Nothing — only the parent benefits','The parent\'s positive history appears on the student\'s report','The student gets a new credit card number','Their scores merge together'], correct:1, explanation:'The parent\'s account history (including age and payment record) shows up on the authorized user\'s credit report.' },
+      { q:'If you can\'t always pay the full balance, what\'s the minimum autopay you should set?', opts:['Whatever you can afford','The minimum payment','Half the balance','Nothing — pay manually'], correct:1, explanation:'At absolute minimum, set autopay for the minimum payment to prevent any chance of a late payment hitting your credit report.' }
+    ]
+  },
+  {
+    id:4, title:'Habits That Build Wealth', duration:'30 min', emoji:'📈',
+    desc:'The daily moves that separate 800-score legends from everyone else.',
+    color:'#F0F4FF', accent:'#6366F1',
+    lessons:[
+      { heading:'📉 Master the Utilization Game',
+        body:`Your credit utilization gets reported when your billing statement closes — NOT when you pay. So even if you pay in full every month, if your statement closes when you have a high balance, that high utilization gets reported. The pro move: <strong>pay down your balance BEFORE your statement closes</strong>. Your card issuer's app will show your statement closing date. If your limit is $1,000, try to have less than $100 on the card when that date hits. Below 10% utilization = elite score territory.`},
+      { heading:'📅 The 30-Day Rule — Never Cross It',
+        body:`A payment isn't reported as "late" until it's <strong>30+ days past due</strong>. If you're a day or two late, you'll probably get a late fee ($25–$35) but your credit score is safe. The 30-day mark is when real damage happens — and it stays for 7 years. This doesn't mean you should wait until day 29 to pay. But it DOES mean that if life happens and you miss a due date by a few days, don't panic. Just pay it ASAP and your score is fine.`},
+      { heading:'📱 Monitor Like a Pro (For Free)',
+        body:`Checking your credit should be as routine as checking your bank balance. Here's your free toolkit: <strong>Credit Karma</strong> — free VantageScore, updated weekly; <strong>Experian app</strong> — free FICO 8 score; <strong>Your bank/card app</strong> — most major banks now include a free FICO score right in the app. Also check your full credit REPORTS (not just scores) at AnnualCreditReport.com at least every few months to catch errors.`},
+      { heading:'📤 The Credit Limit Increase Move',
+        body:`After 6–12 months of on-time payments, call your card issuer and ask for a credit limit increase. This is a power move because it instantly drops your utilization. Example: $300 balance on a $1,000 limit = 30% utilization. Same $300 on a $2,000 limit = 15%. Your score improves without changing your spending habits at all. Key: ask if they can do a <strong>soft pull</strong> (no hard inquiry). Most issuers will.`}
+    ],
+    infoBox:'💡 Set a phone reminder for 3 days before your statement close date. Pay down your balance then. This one trick can boost your score significantly.',
+    funFact:'🧠 People with 800+ scores use an average of only 7% of their available credit. That\'s the benchmark.',
+    warnBox:'⚠️ Paying only the minimum is a trap. A $1,000 balance at 22% APR with minimum payments = over 5 years to pay off and $600+ in interest. Always pay in full.',
+    keyPoints:[
+      { icon:'📉', text:'Pay before your <strong>statement closes</strong>, not just before the due date. That\'s when utilization gets reported.' },
+      { icon:'📅', text:'Late payments hit your credit at <strong>30 days</strong>. A few days late = late fee only, not score damage.' },
+      { icon:'📱', text:'Use <strong>Credit Karma + your bank app</strong> to monitor weekly. It\'s free and takes 30 seconds.' },
+      { icon:'📤', text:'Request a <strong>limit increase</strong> after 6–12 months. Ask for a soft pull only.' },
+      { icon:'🎯', text:'Target <strong>under 10% utilization</strong> at statement close for maximum score impact.' }
+    ],
+    quiz:[
+      { q:'When does your credit utilization get reported to the bureaus?', opts:['When you make a purchase','When you pay your bill','When your billing statement closes','At the end of the calendar month'], correct:2, explanation:'Utilization is reported based on your balance at statement close, not when you actually pay.' },
+      { q:'A payment becomes a negative mark on your report after how many days late?', opts:['1 day','15 days','30 days','60 days'], correct:2, explanation:'Payments are reported as late to the bureaus once they are 30+ days past the due date.' },
+      { q:'What\'s the elite-level utilization percentage to aim for?', opts:['Under 50%','Under 30%','Under 10%','Exactly 0%'], correct:2, explanation:'People with the highest scores typically keep utilization under 10%. It signals low credit risk.' },
+      { q:'Why does a credit limit increase help your score?', opts:['It adds a new account','It lowers your utilization ratio','It improves your credit mix','It removes hard inquiries'], correct:1, explanation:'A higher limit with the same spending = lower utilization percentage = higher score.' },
+      { q:'What is a "soft pull"?', opts:['A type of credit card','A credit check that doesn\'t affect your score','A request to lower your credit limit','A way to close an account'], correct:1, explanation:'A soft pull (or soft inquiry) checks your credit without impacting your score. Many limit increase requests can use a soft pull.' },
+      { q:'If your credit limit is $2,000, what should your balance be at statement close for optimal score?', opts:['$600','$400','$200 or less','Doesn\'t matter if you pay on time'], correct:2, explanation:'Under 10% of $2,000 = under $200. This puts you in the elite utilization range.' },
+      { q:'How long after opening your first card should you request a credit limit increase?', opts:['Immediately','1 month','3 months','6–12 months'], correct:3, explanation:'Most issuers want to see 6–12 months of responsible usage before approving a limit increase.' },
+      { q:'Which of these is NOT a free way to check your credit score?', opts:['Credit Karma','Your bank\'s app','Paying a credit monitoring service $30/month','Experian free tier'], correct:2, explanation:'You never need to pay to check your credit score. Credit Karma, Experian, and most bank apps offer it free.' }
+    ]
+  },
+  {
+    id:5, title:'Mistakes & Recovery', duration:'30 min', emoji:'🛡️',
+    desc:"Messed up? It happens. Here's exactly how to bounce back — faster than you think.",
+    color:'#FFF0F0', accent:'#EF4444',
+    lessons:[
+      { heading:'😰 What Happens When You Miss a Payment',
+        body:`Let's walk through the timeline. <strong>1–29 days late</strong>: You get a late fee ($25–$35) but your credit report is untouched. Breathe. <strong>30 days late</strong>: The late payment gets reported to all three bureaus. Your score drops 50–100 points. <strong>60–90 days late</strong>: Additional late marks, and your card issuer may increase your interest rate. <strong>180+ days late</strong>: Account gets "charged off" and may be sent to collections — a very serious mark. The takeaway: as long as you catch it before 30 days, your score is safe.`},
+      { heading:'🗓️ How Long Does Damage Last?',
+        body:`Here's the shelf life of negative items: <strong>Late payments: 7 years</strong>. <strong>Collections: 7 years</strong>. <strong>Charge-offs: 7 years</strong>. <strong>Chapter 7 bankruptcy: 10 years</strong>. <strong>Hard inquiries: 2 years</strong> (impact fades after ~12 months). The silver lining: older negative items have WAY less impact. A 5-year-old late payment barely moves the needle. The first 1–2 years are when the damage hurts most.`},
+      { heading:'📝 Disputing Errors (It\'s Free)',
+        body:`One in five Americans has an error on their credit report. That could be you. Common errors: accounts you never opened (could be identity theft), incorrect balances, late payments that were actually on time, or closed accounts showing as open. To dispute: go to the bureau's website (Equifax.com, Experian.com, or TransUnion.com), click "Disputes," and file your claim. They have <strong>30 days to investigate</strong>. If they can't verify the info, it must be removed. This is 100% free — NEVER pay someone to do this.`},
+      { heading:'🔄 The Comeback Playbook',
+        body:`Recovery is real and faster than you think. Step 1: Get current on all accounts (bring anything past-due up to date). Step 2: Get a secured credit card if you need a fresh positive account. Step 3: Set up autopay, keep utilization low, and let time work for you. Most people see significant recovery within <strong>12–24 months</strong> of consistent good behavior. Your old mistakes fade while new positive data builds up. Credit has a short memory if you let it.`}
+    ],
+    infoBox:'💡 If you know you can\'t make a payment, call your card issuer BEFORE the due date. Many have hardship programs that can defer payments, reduce your rate, or waive fees — without hurting your score.',
+    funFact:'🧠 After a medical debt is paid, it\'s required to be removed from your credit report. This rule changed in 2023 and helps millions of people.',
+    warnBox:'⚠️ "Credit repair" companies that charge you money to "fix" your credit are almost always scams. They can\'t do anything you can\'t do yourself for free. Save your money.',
+    keyPoints:[
+      { icon:'⏱️', text:'You have a <strong>29-day window</strong> before a late payment hits your report. Late fee, yes. Score damage, no.' },
+      { icon:'🗓️', text:'Negative items stay <strong>7 years</strong> but their impact fades significantly after 2 years.' },
+      { icon:'📝', text:'<strong>1 in 5 people</strong> have credit report errors. Dispute them for free — it\'s your legal right.' },
+      { icon:'🔄', text:'Most people recover meaningfully within <strong>12–24 months</strong> of good habits.' },
+      { icon:'🚫', text:'NEVER pay a "credit repair" company. Everything they claim to do, you can do yourself for $0.' }
+    ],
+    quiz:[
+      { q:'At what point does a missed payment get reported to credit bureaus?', opts:['1 day late','15 days late','30 days late','At the next billing cycle'], correct:2, explanation:'A payment isn\'t reported as late until it\'s 30+ days past the due date.' },
+      { q:'How long does a late payment stay on your credit report?', opts:['1 year','3 years','7 years','Forever'], correct:2, explanation:'Late payments remain for 7 years, but their impact diminishes significantly over time, especially after the first 2 years.' },
+      { q:'What should you do if you find an error on your credit report?', opts:['Ignore it','Pay a credit repair company','File a free dispute with the bureau','Close the account'], correct:2, explanation:'File a free dispute directly with Equifax, Experian, or TransUnion. They have 30 days to investigate.' },
+      { q:'How long do hard inquiries stay on your report?', opts:['6 months','1 year','2 years','5 years'], correct:2, explanation:'Hard inquiries stay for 2 years, but their real impact on your score fades after about 12 months.' },
+      { q:'What\'s the first step in recovering from a credit setback?', opts:['Close all your accounts','Get current on all past-due accounts','Apply for more credit cards','Wait 7 years'], correct:1, explanation:'Step one is always to bring all accounts current. Then focus on building positive history going forward.' },
+      { q:'You\'re 3 days past your credit card due date. What happens to your credit score?', opts:['It drops 50 points','It drops 10 points','Nothing — but you may owe a late fee','Your card gets cancelled'], correct:2, explanation:'At 3 days late, you may face a late fee, but your credit score is not affected until the 30-day mark.' },
+      { q:'What percentage of Americans have at least one error on their credit report?', opts:['About 5%','About 10%','About 20%','About 50%'], correct:2, explanation:'Studies show that about 1 in 5 Americans (20%) have at least one error on their credit reports.' },
+      { q:'How quickly can you realistically see significant credit score recovery after a setback?', opts:['1–2 months','6 months','12–24 months','5+ years'], correct:2, explanation:'With consistent good habits, most people see meaningful score recovery within 12–24 months.' }
+    ]
+  },
+  {
+    id:6, title:'Credit & Your Future', duration:'20 min', emoji:'🚀',
+    desc:'Your score today shapes your apartment, car, home, and career tomorrow. Here\'s the roadmap.',
+    color:'#F5F0FF', accent:'#8B5CF6',
+    lessons:[
+      { heading:'🏠 Getting Your Own Place',
+        body:`Moving out? Landlords check credit. With no credit history, you might need a co-signer or a bigger security deposit. With a score above <strong>670</strong>, most standard apartments will approve you with no issues. Above 720? You've got negotiating power — you might even get a reduced deposit. Think about it: building credit at 17–18 means by the time you're 20–21 and looking for your first apartment, you could already have a solid score.`},
+      { heading:'🚗 Your First Car',
+        body:`Car loans are where your credit score really hits your wallet. At a <strong>580 score</strong>, you might pay 14–18% APR. At a <strong>750 score</strong>, you might pay 5–7% APR. On a $20,000 car loan over 5 years, that difference is over <strong>$6,000 in extra interest</strong>. That's $6,000 that could be in your pocket instead of the bank's. Starting to build credit now means you could have a great score by the time you need a car loan.`},
+      { heading:'🏡 The Big One: Your Mortgage',
+        body:`A mortgage is probably the biggest financial decision you'll ever make. The difference between a 640 score and a 760 score on a $300,000 mortgage can mean over <strong>$150,000 in extra interest</strong> over 30 years. One hundred and fifty thousand dollars. Your 18-year-old self building credit right now is directly helping your 30-year-old self save a house-down-payment worth of interest. That's the power of starting early.`},
+      { heading:'💼 Credit & Your Career',
+        body:`Some employers — especially in finance, government, and management — run credit checks as part of background screening. A poor credit history can raise red flags about reliability and decision-making. While this is controversial, it's a reality of the job market. Building solid credit now means this will never be a barrier for you. Your financial responsibility becomes an asset, not a liability.`}
+    ],
+    infoBox:'💡 Set your 12-month goal now: write down the date you opened (or will open) your first credit card. Set a reminder for 12 months later to check your score. Target: 700+.',
+    funFact:'🧠 A person with excellent credit (760+) will save approximately $250,000 over their lifetime compared to someone with poor credit (580). That\'s a whole house in some cities.',
+    warnBox:'⚠️ Student loans count too! Many people forget that student loan payments affect your credit score the moment you enter repayment. Treat them with the same discipline as credit cards.',
+    keyPoints:[
+      { icon:'🏠', text:'A score above <strong>670</strong> makes apartment hunting way smoother. Above 720 = negotiating power.' },
+      { icon:'🚗', text:'A good score saves you <strong>$6,000+</strong> on a single car loan. That\'s a vacation.' },
+      { icon:'🏡', text:'On a mortgage, good vs. poor credit = <strong>$150,000+ saved</strong>. That\'s life-changing money.' },
+      { icon:'💼', text:'Some employers check credit. Clean credit = <strong>one less thing</strong> standing between you and your dream job.' },
+      { icon:'📅', text:'Starting at 18 means you could have a <strong>10+ year credit history</strong> by the time you buy a house.' }
+    ],
+    quiz:[
+      { q:'What credit score do you generally need for smooth apartment approval?', opts:['550+','620+','670+','750+'], correct:2, explanation:'A score above 670 will get you approved at most standard apartments without needing a co-signer.' },
+      { q:'How much extra can a poor credit score cost you on a $20,000 car loan?', opts:['$500','$2,000','$4,000','$6,000+'], correct:3, explanation:'The interest rate difference between good and poor credit on a 5-year $20,000 loan easily exceeds $6,000.' },
+      { q:'On a $300,000 mortgage, how much more could you pay with a 640 score vs. a 760 score?', opts:['$10,000','$50,000','$150,000+','$300,000'], correct:2, explanation:'Over 30 years, the interest rate difference between these scores can mean over $150,000 in additional payments.' },
+      { q:'Which industries are most likely to check credit during hiring?', opts:['Food service and retail','Finance, government, and management','Education and healthcare','Only tech companies'], correct:1, explanation:'Finance, government, and management roles most commonly include credit checks as part of background screening.' },
+      { q:'If you start building credit at 18, how many years of history could you have by age 28?', opts:['2 years','5 years','10 years','15 years'], correct:2, explanation:'Starting at 18 gives you a full decade of credit history by 28 — a major advantage for mortgages and other big decisions.' },
+      { q:'Do student loan payments affect your credit score?', opts:['No, they\'re separate','Only if you miss a payment','Yes, from the moment you enter repayment','Only after you graduate'], correct:2, explanation:'Student loans are reported to credit bureaus and affect your score as soon as you begin making payments.' },
+      { q:'Approximately how much can excellent credit save you over a LIFETIME compared to poor credit?', opts:['$10,000','$50,000','$100,000','$250,000+'], correct:3, explanation:'Between lower interest rates on cars, mortgages, insurance, and other loans, excellent credit saves approximately $250,000 over a lifetime.' }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// INIT — Check if already logged in via server session
+// ═══════════════════════════════════════════════════════
+document.getElementById('score-date-input').value = new Date().toISOString().split('T')[0];
+
+(async function checkSession() {
+  try {
+    const res = await fetch('/api/me', { credentials:'same-origin' });
+    if(res.ok) {
+      const data = await res.json();
+      state.studentName = data.user.name;
+      await loadFromServer();
+      document.getElementById('welcome-screen').classList.add('hidden');
+      init();
+    }
+  } catch(e) { /* Not logged in — show auth screen */ }
+})();
+
+function init() {
+  document.getElementById('sidebar-name').textContent = state.studentName;
+  document.getElementById('dash-greeting').textContent = `What's up, ${state.studentName}! 💪`;
+  document.getElementById('cert-student-name').textContent = state.studentName;
+  renderDashboard(); renderSidebarProgress();
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showPage(id) {
+  if(id !== 'module') trackModuleExit('page_change');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(id==='tracker') renderScoreTracker();
+  if(id==='certificate') renderCertificate();
+  if(id==='dashboard') renderDashboard();
+  window.scrollTo(0,0);
+}
+
+function openModule(num) {
+  if(num > 1 && !state.completedModules.includes(num-1)) return;
+  trackModuleExit('switch');
+  renderModuleDetail(num);
+  showPage('module');
+  startModuleSession(num);
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  const done = state.completedModules.length;
+  document.getElementById('stat-completed').textContent = done+'/6';
+  const msgs = ['Let\'s get it!','Nice start!','Halfway there!','On fire!','Almost done!','So close!','YOU DID IT! 🎉'];
+  document.getElementById('stat-complete-sub').textContent = done === 6 ? msgs[6] : msgs[done];
+  const qKeys = Object.keys(state.quizScores);
+  if(qKeys.length>0){
+    const avg = Math.round(qKeys.reduce((s,k)=>s+state.quizScores[k],0)/qKeys.length);
+    document.getElementById('stat-quiz').textContent = avg+'%';
+    document.getElementById('stat-quiz-sub').textContent = avg>=80?'Crushing it!':avg>=60?'Solid work!':'Keep learning!';
+  }
+  if(state.scores.length>0){
+    const latest = state.scores[state.scores.length-1];
+    document.getElementById('stat-score').textContent = latest.val;
+    document.getElementById('stat-score-sub').textContent = scoreBandLabel(latest.val);
+  }
+  const grid = document.getElementById('module-grid'); grid.innerHTML = '';
+  MODULES.forEach(m=>{
+    const isDone = state.completedModules.includes(m.id);
+    const isNext = !isDone && (m.id===1 || state.completedModules.includes(m.id-1));
+    const isLocked = !isDone && !isNext;
+    const card = document.createElement('div');
+    card.className = 'module-card'+(isLocked?' locked':'')+(isDone?' completed':'')+(isNext?' next-up':'');
+    card.onclick = ()=> !isLocked && openModule(m.id);
+    card.innerHTML = `
+      ${isDone?'<span class="m-check">✅</span>':''}
+      <div class="m-emoji">${m.emoji}</div>
+      <div class="m-num" style="color:${m.accent}">Module ${m.id}</div>
+      <h3>${m.title}</h3>
+      <p>${m.desc}</p>
+      <div class="m-footer">
+        <span class="m-duration">⏱ ${m.duration} · ${m.quiz.length} questions</span>
+        <span class="m-status ${isDone?'done':isNext?'next':'locked-s'}">
+          ${isDone?'✓ Cleared':isNext?'Start →':'🔒 Locked'}
+        </span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MODULE DETAIL
+// ═══════════════════════════════════════════════════════
+function renderModuleDetail(num) {
+  const m = MODULES[num-1];
+  const isDone = state.completedModules.includes(m.id);
+  let html = `<div class="lesson-card">
+    <span class="lesson-tag">Module ${m.id} of 6 · ${m.duration} · ${m.quiz.length} quiz questions</span>
+    <div class="module-header"><span class="mh-emoji">${m.emoji}</span><h2>${m.title}</h2></div>
+    <div style="height:4px;background:linear-gradient(90deg,${m.accent},${m.accent}40);border-radius:2px;margin-bottom:28px"></div>`;
+  m.lessons.forEach(l=>{ html += `<div class="lesson-section"><h3>${l.heading}</h3><p>${l.body}</p></div>`; });
+  html += `<div class="info-box"><p>${m.infoBox}</p></div>`;
+  if(m.funFact) html += `<div class="fun-fact"><p>${m.funFact}</p></div>`;
+  html += `<div class="warn-box"><p>${m.warnBox}</p></div>`;
+  html += `<div class="lesson-section"><h3>🔑 Key Takeaways</h3><div class="key-points">${m.keyPoints.map(kp=>`<div class="key-point"><span class="kp-icon">${kp.icon}</span><span class="kp-text">${kp.text}</span></div>`).join('')}</div></div>`;
+
+  // QUIZ
+  const totalQ = m.quiz.length;
+  const answeredMap = (state._quizAnswers && state._quizAnswers[m.id]) || {};
+  const answeredCount = Object.keys(answeredMap).length;
+  const correctCount = Object.values(answeredMap).filter(v=>v===1).length;
+  html += `<div class="quiz-section">
+    <div class="quiz-header"><span style="font-size:1.5rem">📝</span><h3>Quiz Time — ${totalQ} Questions</h3></div>
+    <p class="quiz-intro">Test what you just learned. Get instant feedback on every answer. You got this!</p>
+    <div class="quiz-score-bar">
+      <span class="qs-label">Progress</span>
+      <div class="qs-bar"><div class="qs-fill" style="width:${(answeredCount/totalQ*100)}%"></div></div>
+      <span class="qs-text">${answeredCount}/${totalQ}</span>
+    </div>`;
+  const letters = ['A','B','C','D'];
+  m.quiz.forEach((q,qi)=>{
+    const wasAnswered = answeredMap[qi] !== undefined;
+    const wasCorrect = answeredMap[qi] === 1;
+    html += `<div class="quiz-q ${wasAnswered?(wasCorrect?'answered-correct':'answered-wrong'):''}" id="quiz-${m.id}-${qi}">
+      <div class="q-header"><span class="q-num">${qi+1}</span><span class="q-text">${q.q}</span></div>
+      <div class="quiz-options">`;
+    q.opts.forEach((opt,oi)=>{
+      html += `<button class="quiz-opt" id="qopt-${m.id}-${qi}-${oi}" onclick="answerQuiz(${m.id},${qi},${oi})" ${wasAnswered?'disabled':''}>
+        <span class="opt-letter">${letters[oi]}</span>${opt}</button>`;
+    });
+    html += `</div><div class="quiz-feedback" id="qfb-${m.id}-${qi}" style="display:none"></div></div>`;
+  });
+  html += `</div>`;
+
+  // Quiz results area (shown after submitting)
+  html += `<div id="quiz-results-${m.id}" style="display:none"></div>`;
+
+  // Submit quiz button (only if not already completed)
+  if(!isDone) {
+    html += `<button class="complete-btn" id="submit-quiz-${m.id}" onclick="submitQuiz(${m.id})" disabled>
+      Answer All Questions to Submit Quiz (80% to pass)</button>`;
+  } else {
+    html += `<button class="complete-btn passed" id="submit-quiz-${m.id}" disabled>
+      ✅ Module Complete! — Score: ${state.quizScores[m.id]||0}%</button>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('module-content').innerHTML = html;
+
+  // Restore previously answered quiz states visually
+  Object.keys(answeredMap).forEach(qi=>{
+    const q = m.quiz[parseInt(qi)];
+    const wasCorrect = answeredMap[qi] === 1;
+    // We need to find which option was selected — store it
+    const selectedOpt = state._quizSelections && state._quizSelections[m.id] && state._quizSelections[m.id][qi];
+    if(selectedOpt !== undefined){
+      const optEl = document.getElementById(`qopt-${m.id}-${qi}-${selectedOpt}`);
+      if(optEl) optEl.classList.add(wasCorrect?'correct':'wrong');
+      if(!wasCorrect){
+        const correctEl = document.getElementById(`qopt-${m.id}-${qi}-${q.correct}`);
+        if(correctEl) correctEl.classList.add('correct');
+      }
+      const fb = document.getElementById(`qfb-${m.id}-${qi}`);
+      if(fb){ fb.style.display='block'; fb.className='quiz-feedback '+(wasCorrect?'ok':'nope'); fb.textContent=(wasCorrect?'✓ Correct! ':'✗ Not quite. ')+q.explanation; }
+    }
+  });
+
+  // Restore failed/pending quiz state so users never get stuck after refresh/navigation
+  const savedScore = state.quizScores[m.id];
+  const submitBtn = document.getElementById(`submit-quiz-${m.id}`);
+  const resultsDiv = document.getElementById(`quiz-results-${m.id}`);
+
+  if(!isDone && answeredCount === totalQ && submitBtn){
+    submitBtn.disabled = false;
+
+    if(typeof savedScore === 'number' && savedScore < 80){
+      const correct = Object.values(answeredMap).filter(v=>v===1).length;
+      submitBtn.textContent = '🔄 Retake Quiz';
+      submitBtn.onclick = () => retryQuiz(m.id);
+      resultsDiv.innerHTML = `
+        <div class="quiz-results fail">
+          <div class="qr-icon">😤</div>
+          <div class="qr-score">${savedScore}%</div>
+          <div class="qr-msg">You need 80% to pass. You got ${correct} out of ${totalQ} correct.<br/>Review the lesson material and give it another shot — you got this!</div>
+          <button class="retry-btn" onclick="retryQuiz(${m.id})">🔄 Retry Quiz</button>
+        </div>`;
+      resultsDiv.style.display = 'block';
+    } else {
+      submitBtn.textContent = '📝 Submit Quiz & Check Your Score';
+    }
+  }
+}
+
+// ═══════ QUIZ ANSWER — FIXED: only disables the answered question ═══════
+function answerQuiz(moduleId, qIdx, optIdx) {
+  const m = MODULES[moduleId-1];
+  const q = m.quiz[qIdx];
+  const isCorrect = optIdx === q.correct;
+
+  // Only disable THIS question's options (FIX!)
+  const thisOpts = document.querySelectorAll(`[id^="qopt-${moduleId}-${qIdx}-"]`);
+  thisOpts.forEach(o => o.disabled = true);
+
+  thisOpts[optIdx].classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) thisOpts[q.correct].classList.add('correct');
+
+  const fb = document.getElementById(`qfb-${moduleId}-${qIdx}`);
+  fb.style.display = 'block';
+  fb.className = 'quiz-feedback '+(isCorrect?'ok':'nope');
+  fb.textContent = (isCorrect?'✓ Correct! ':'✗ Not quite. ')+q.explanation;
+
+  // Mark the question container
+  const qWrap = document.getElementById(`quiz-${moduleId}-${qIdx}`);
+  if(qWrap) qWrap.classList.add(isCorrect?'answered-correct':'answered-wrong');
+
+  // Save answer
+  recordQuizAnswerMetric(moduleId, qIdx, isCorrect);
+  if(!state._quizAnswers) state._quizAnswers = {};
+  if(!state._quizAnswers[moduleId]) state._quizAnswers[moduleId] = {};
+  state._quizAnswers[moduleId][qIdx] = isCorrect?1:0;
+
+  // Save which option was selected (for restoring state)
+  if(!state._quizSelections) state._quizSelections = {};
+  if(!state._quizSelections[moduleId]) state._quizSelections[moduleId] = {};
+  state._quizSelections[moduleId][qIdx] = optIdx;
+
+  // Update progress bar
+  const totalQ = m.quiz.length;
+  const answeredCount = Object.keys(state._quizAnswers[moduleId]).length;
+  const bar = document.querySelector('.quiz-score-bar .qs-fill');
+  const text = document.querySelector('.quiz-score-bar .qs-text');
+  if(bar) bar.style.width = (answeredCount/totalQ*100)+'%';
+  if(text) text.textContent = answeredCount+'/'+totalQ;
+
+  // If all answered, enable submit button
+  if(answeredCount === totalQ){
+    const submitBtn = document.getElementById(`submit-quiz-${moduleId}`);
+    if(submitBtn && !state.completedModules.includes(moduleId)) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '📝 Submit Quiz & Check Your Score';
+    }
+  }
+  save();
+}
+
+// ═══════ SUBMIT QUIZ — gate at 80% ═══════
+function submitQuiz(moduleId) {
+  const m = MODULES[moduleId-1];
+  const totalQ = m.quiz.length;
+  const answers = state._quizAnswers[moduleId] || {};
+  const correct = Object.values(answers).filter(v=>v===1).length;
+  const pct = Math.round((correct/totalQ)*100);
+  state.quizScores[moduleId] = pct;
+
+  const resultsDiv = document.getElementById(`quiz-results-${moduleId}`);
+  const submitBtn = document.getElementById(`submit-quiz-${moduleId}`);
+  const passed = pct >= 80;
+
+  finalizeQuizAttempt(moduleId, pct, passed, totalQ);
+  save();
+
+  if(passed) {
+    // PASS
+    resultsDiv.innerHTML = `
+      <div class="quiz-results pass">
+        <div class="qr-icon">🎉</div>
+        <div class="qr-score">${pct}%</div>
+        <div class="qr-msg">You passed! ${correct} out of ${totalQ} correct. Nice work — you clearly know your stuff.</div>
+      </div>`;
+    resultsDiv.style.display = 'block';
+    submitBtn.disabled = true;
+    submitBtn.textContent = '✅ Module Complete! — Score: ' + pct + '%';
+    submitBtn.classList.add('passed');
+
+    // Mark module as completed
+    if(!state.completedModules.includes(moduleId)){ state.completedModules.push(moduleId); save(); }
+    renderDashboard(); renderSidebarProgress();
+
+    if(moduleId < 6){
+      setTimeout(()=>{
+        appConfirm({ title:`Module ${moduleId} passed with ${pct}%!`, message:`Ready for Module ${moduleId+1}?`, confirmText:'Open Next Module', cancelText:'Back to Dashboard', kicker:'Quiz complete' }).then(ok => { if(ok) openModule(moduleId+1); else showPage('dashboard'); });
+      },600);
+    } else {
+      setTimeout(()=>{
+        appAlert({ title:'You did it!', message:'All 6 modules are complete and your certificate is now unlocked.', kicker:'Quiz complete', buttonText:'View Certificate' }).then(() => showPage('certificate'));
+      },600);
+    }
+  } else {
+    // FAIL — must retry
+    resultsDiv.innerHTML = `
+      <div class="quiz-results fail">
+        <div class="qr-icon">😤</div>
+        <div class="qr-score">${pct}%</div>
+        <div class="qr-msg">You need 80% to pass. You got ${correct} out of ${totalQ} correct.<br/>Review the lesson material and give it another shot — you got this!</div>
+        <button class="retry-btn" onclick="retryQuiz(${moduleId})">🔄 Retry Quiz</button>
+      </div>`;
+    resultsDiv.style.display = 'block';
+    submitBtn.style.display = 'none';
+  }
+}
+
+// ═══════ RETRY QUIZ — reset answers and re-render ═══════
+function appToast(message, type='info', title='Notice') {
+  if (typeof window.showSiteToast === 'function') {
+    window.showSiteToast(message, type, title);
+    return;
+  }
+  console[type === 'error' ? 'error' : 'log'](title + ': ' + message);
+}
+
+async function appConfirm(options) {
+  if (typeof window.showSiteConfirm === 'function') return window.showSiteConfirm(options);
+  return confirm(options?.message || options?.title || 'Continue?');
+}
+
+async function appAlert(options) {
+  if (typeof window.showSiteAlert === 'function') return window.showSiteAlert(options);
+  alert(options?.message || options?.title || 'Notice');
+}
+
+function retryQuiz(moduleId) {
+  const metric = ensureQuizMetric(moduleId);
+  metric.currentAttempt = null;
+  // Clear quiz answers and selections for this module
+  delete state._quizAnswers[moduleId];
+  delete state._quizSelections[moduleId];
+  delete state.quizScores[moduleId];
+  save();
+  // Re-render the module
+  renderModuleDetail(moduleId);
+}
+
+// completeModule is now handled by submitQuiz above
+
+// ═══════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════
+function renderSidebarProgress() {
+  const done = state.completedModules.length;
+  const xp = done * 100 + Object.keys(state.quizScores).length * 50;
+  document.getElementById('sidebar-progress').style.width = (done/6*100)+'%';
+  document.getElementById('sidebar-progress-label').textContent = `${done} of 6 modules cleared`;
+  document.getElementById('xp-label').textContent = xp+' XP';
+  const streakMsgs = ['Start your streak!','1 module down!','2 done — keep going!','Halfway! 🔥','4 cleared!','Almost there!','ALL DONE! 🏆'];
+  document.getElementById('streak-text').textContent = streakMsgs[done];
+  // Update nav badges
+  for(let i=1;i<=6;i++){
+    const nav = document.getElementById('nav-m'+i);
+    if(!nav) continue;
+    const existing = nav.querySelector('.badge');
+    if(existing) existing.remove();
+    if(state.completedModules.includes(i)){
+      const b = document.createElement('span'); b.className='badge'; b.textContent='✓'; nav.appendChild(b);
+    }
+  }
+}
+
+function escapeHtmlText(value){
+  return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function sanitizeScoreNote(value){
+  return String(value||'').replace(/[<>]/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
+}
+
+// ═══════════════════════════════════════════════════════
+// SCORE TRACKER
+// ═══════════════════════════════════════════════════════
+let scoreChart = null;
+function addScore() {
+  const val = parseInt(document.getElementById('score-val-input').value);
+  const date = document.getElementById('score-date-input').value;
+  const note = sanitizeScoreNote(document.getElementById('score-note-input').value);
+  if(!val||val<300||val>850){ appToast('Enter a score between 300 and 850.', 'error', 'Score tracker'); return; }
+  if(!date){ appToast('Pick a date first.', 'error', 'Score tracker'); return; }
+  state.scores.push({val,date,note});
+  state.scores.sort((a,b)=>a.date.localeCompare(b.date));
+  save();
+  document.getElementById('score-val-input').value='';
+  document.getElementById('score-note-input').value='';
+  renderScoreTracker();
+  document.getElementById('stat-score').textContent=val;
+  document.getElementById('stat-score-sub').textContent=scoreBandLabel(val);
+}
+function deleteScore(idx){ state.scores.splice(idx,1); save(); renderScoreTracker(); }
+function scoreBandLabel(v){
+  if(v<580) return 'Building...';
+  if(v<670) return 'Fair — improving!';
+  if(v<740) return 'Good — solid!';
+  if(v<800) return 'Very Good — nice!';
+  return 'Elite status!';
+}
+function scoreBandClass(v){
+  if(v<580) return 'band-poor';
+  if(v<670) return 'band-fair';
+  if(v<740) return 'band-good';
+  if(v<800) return 'band-very-good';
+  return 'band-excellent';
+}
+function renderScoreTracker(){
+  const scores=state.scores; const isEmpty=scores.length===0;
+  document.getElementById('chart-empty').style.display=isEmpty?'block':'none';
+  const canvas=document.getElementById('scoreChart');
+  canvas.style.display=isEmpty?'none':'block';
+  if(!isEmpty){
+    if(scoreChart) scoreChart.destroy();
+    scoreChart = new Chart(canvas,{
+      type:'line',
+      data:{ labels:scores.map(s=>{ const d=new Date(s.date+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }),
+        datasets:[{ label:'Credit Score', data:scores.map(s=>s.val),
+          borderColor:'#00B4D8', backgroundColor:'rgba(0,180,216,0.08)',
+          borderWidth:3, pointBackgroundColor:'#00B4D8', pointBorderColor:'#fff', pointBorderWidth:2,
+          pointRadius:6, pointHoverRadius:8, tension:.3, fill:true }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{display:false} },
+        scales:{ y:{min:280,max:860,grid:{color:'rgba(0,0,0,0.04)'},ticks:{stepSize:50}}, x:{grid:{display:false}} }
+      }
+    });
+  }
+  const wrap=document.getElementById('score-table-wrap');
+  if(isEmpty){ wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>No entries yet — log your first score!</p></div>'; return; }
+  let rows=[...scores].reverse().map((s,ri)=>{
+    const idx=scores.length-1-ri;
+    const d=new Date(s.date+'T00:00:00');
+    return `<tr><td>${d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</td>
+      <td class="score-val">${s.val}</td>
+      <td><span class="score-band ${scoreBandClass(s.val)}">${scoreBandLabel(s.val)}</span></td>
+      <td>${escapeHtmlText(s.note||'—')}</td>
+      <td><button class="del-btn" onclick="deleteScore(${idx})" title="Remove">✕</button></td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<table class="score-table"><thead><tr><th>Date</th><th>Score</th><th>Rating</th><th>Note</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// CERTIFICATE
+// ═══════════════════════════════════════════════════════
+function renderCertificate(){
+  const done=state.completedModules.length;
+  const locked=document.getElementById('cert-locked');
+  const display=document.getElementById('cert-display');
+  if(done<6){
+    locked.style.display='block'; display.style.display='none';
+    document.getElementById('cert-locked-msg').textContent = `${done}/6 modules cleared. Keep going — you\\'re ${6-done} away!`;
+    let dots=''; for(let i=1;i<=6;i++) dots+=`<div class="mod-dot ${state.completedModules.includes(i)?'filled':'empty'}">${i}</div>`;
+    document.getElementById('cert-dots').innerHTML=dots;
+  } else {
+    locked.style.display='none'; display.style.display='block';
+    document.getElementById('cert-date').textContent='Issued: '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+    // Build quiz scores table for certificate
+    const moduleNames = ['How Credit Works','The Five Pillars','Getting Started Right','Power Habits','Mistakes & Recovery','Credit & Your Future'];
+    let scoresHTML = '<table><thead><tr><th>Module</th><th style="text-align:right">Score</th></tr></thead><tbody>';
+    let totalPct = 0;
+    for(let i=1;i<=6;i++){
+      const pct = state.quizScores[i] || 0;
+      totalPct += pct;
+      scoresHTML += `<tr><td>${moduleNames[i-1]}</td><td class="cs-score">${pct}%</td></tr>`;
+    }
+    const avg = Math.round(totalPct/6);
+    scoresHTML += `<tr style="border-top:2px solid var(--navy)"><td class="cs-avg">Overall Average</td><td class="cs-score cs-avg">${avg}%</td></tr>`;
+    scoresHTML += '</tbody></table>';
+    document.getElementById('cert-scores-table').innerHTML = scoresHTML;
+  }
+}
+</script>
+<script src="/enhancements.js"></script>
+</body>
+</html>
